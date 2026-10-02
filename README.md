@@ -10,7 +10,7 @@ It runs in any browser and can be added to the home screen like an app. It keeps
 
 When you first open the app, you choose one of these:
 
-- **Google Sheet (recommended).** Entries are saved to a Google Sheet in your own Google account: a **Projects**, **Entries**, **Workers** and **Attendance** tabs. Receipt photos go to a Drive folder called *Site Khata receipts*. Nothing is stored on GitHub or anywhere else.
+- **Google Sheet (recommended).** Entries are saved to a Google Sheet in your own Google account, in **Projects**, **Entries**, **Workers** and **Attendance** tabs. Receipt photos go to a Drive folder called *Site Khata receipts*. Nothing is stored on GitHub or anywhere else.
 - **This phone only.** Everything stays in the phone's browser. Use **Settings → Download backup** regularly.
 
 ## One-time Google Sheet setup (about 15 minutes, easiest on a laptop)
