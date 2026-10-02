@@ -53,6 +53,36 @@ body.setup{padding-bottom:24px}
 .steps ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .steps a{color:var(--accent)}
 .banner .btn{margin-left:6px;vertical-align:middle}
+.ledger-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.ltable{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+.ltable th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;text-align:left;padding:9px 10px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.ltable td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+.ltable tbody tr{cursor:pointer}
+.ltable tbody tr:hover{background:var(--surface-2)}
+.ltable .r{text-align:right;white-space:nowrap}
+.ltable .b{font-weight:700}
+.ltable td.d{white-space:nowrap}
+.ltable td.d span,.ltable td.det span{display:block;font-size:11.5px;color:var(--muted)}
+.ltable td.det{min-width:150px}
+.ltable tfoot td{font-weight:700;background:var(--surface-2);border-top:2px solid var(--line)}
+@media (max-width:560px){
+  .ledger-wrap{overflow:visible}
+  .ltable{min-width:0;display:block}
+  .ltable thead{display:none}
+  .ltable tbody,.ltable tfoot{display:block}
+  .ltable tr{display:grid;grid-template-columns:3.4rem minmax(0,1fr) auto;column-gap:10px;row-gap:2px;padding:10px 12px;border-top:1px solid var(--line)}
+  .ltable tbody tr:first-child{border-top:0}
+  .ltable td{padding:0;border:0;background:none}
+  .ltable td.d{grid-column:1;grid-row:1/4}
+  .ltable td.det{grid-column:2;grid-row:1/4;min-width:0}
+  .ltable td.r{grid-column:3}
+  .ltable td.r:empty{display:none}
+  .ltable td.r[data-l]::before{content:attr(data-l) " ";font-size:11px;font-weight:500;color:var(--muted)}
+  .ltable td.b{font-size:12.5px}
+  .ltable tfoot td{border:0}
+  .ltable tfoot tr{background:var(--surface-2);border-top:2px solid var(--line)}
+  .ltable tfoot td:first-child{grid-column:1/3;grid-row:1/4;align-self:center}
+}
 
 html{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
 html,body{background:var(--bg);color:var(--ink)}
@@ -548,10 +578,10 @@ async function clearExamples(){
 /* ---------- render ---------- */
 function render(){
   document.body.classList.toggle("setup", S.view==="connect");
-  document.querySelectorAll(".nb").forEach(b => b.toggleAttribute("aria-current", b.dataset.nav === (S.view==="project" ? "home" : S.view)));
+  document.querySelectorAll(".nb").forEach(b => b.toggleAttribute("aria-current", b.dataset.nav === (S.view==="project" ? "home" : S.view==="ledger" ? "parties" : S.view)));
   document.querySelectorAll(".nb[aria-current]").forEach(b=>b.setAttribute("aria-current","page"));
   if (S.view==="project" && !proj(S.pid)) S.view="home";
-  ({home:renderHome, project:renderProject, dues:renderDues, bills:renderBills, parties:renderParties, connect:renderConnect, settings:renderSettings})[S.view]();
+  ({home:renderHome, project:renderProject, dues:renderDues, bills:renderBills, parties:renderParties, ledger:renderLedger, connect:renderConnect, settings:renderSettings})[S.view]();
   paintPill(); nudge();
 }
 function header(title, sub, back, right=""){
@@ -679,15 +709,103 @@ function renderBills(){
   $("#main").innerHTML = h;
 }
 
-function renderParties(){
-  header("Parties", "Vendors, suppliers and labour", false);
+function partyGroups(){
   const m = new Map();
-  for (const t of S.txns){ if (!norm(t.party)) continue; const k = norm(t.party); const r = m.get(k) || {name:t.party.trim(), billed:0, paid:0, projects:new Set(), cats:new Set()};
-    if (t.kind==="exp"){ r.billed+=n(t.amount); r.paid+=n(t.paid); if (t.category) r.cats.add(t.category); } else if (t.kind==="pay") r.paid+=n(t.amount);
-    r.projects.add(t.projectId); m.set(k, r); }
-  const list = [...m.values()].sort((a,b)=>b.billed-a.billed);
-  $("#main").innerHTML = list.length ? `<div class="list">` + list.map(r => `<div class="duerow"><div style="min-width:0"><div style="font-weight:600;overflow-wrap:anywhere">${esc(r.name)}</div><div class="muted" style="font-size:12.5px">${esc([...r.cats].join(", "))} · ${r.projects.size} project${r.projects.size>1?"s":""}</div></div><div class="num" style="text-align:right"><div style="font-weight:700">${short(r.billed)}</div><div style="font-size:12px;color:${r.billed-r.paid>=1?"var(--due)":"var(--muted)"}">${r.billed-r.paid>=1? short(r.billed-r.paid)+" due":"settled"}</div></div><span></span></div>`).join("") + `</div>`
-    : `<div class="empty"><h3>No parties yet</h3><p>Suppliers, contractors and labour gangs appear here once you add expenses with a party name.</p></div>`;
+  for (const t of S.txns){
+    if ((t.kind!=="exp" && t.kind!=="pay") || !norm(t.party)) continue;
+    const k = norm(t.party);
+    const r = m.get(k) || {key:k, name:t.party.trim(), billed:0, paid:0, projects:new Set(), cats:new Set(), last:""};
+    if (t.kind==="exp"){ r.billed += n(t.amount); r.paid += n(t.paid); if (t.category) r.cats.add(t.category); } else r.paid += n(t.amount);
+    r.projects.add(t.projectId); if ((t.date||"") > r.last) r.last = t.date || "";
+    m.set(k, r);
+  }
+  return [...m.values()].map(r => ({...r, bal: r.billed - r.paid}));
+}
+function renderParties(){
+  header("Parties", "Vendor & labour ledgers", false);
+  const all = partyGroups();
+  if (!all.length){ $("#main").innerHTML = `<div class="empty"><h3>No parties yet</h3><p>Suppliers, subcontractors and labour gangs appear here once you add an expense with a party name. Each one gets its own ledger.</p></div>`; return; }
+  const q = norm(S.partyQ || "");
+  const list = all.filter(r => !q || r.key.includes(q)).sort((a,b) => (b.bal>=1) - (a.bal>=1) || b.bal - a.bal || b.billed - a.billed);
+  const owe = all.reduce((x,r) => x + Math.max(0, r.bal), 0), adv = all.reduce((x,r) => x + Math.max(0, -r.bal), 0);
+  $("#main").innerHTML = `
+    <div class="strip" style="grid-template-columns:repeat(3,minmax(0,1fr))">${cell("Parties", all.length)}${cell("You owe", short(owe), "due")}${cell("Advances given", short(adv), "in")}</div>
+    <label class="fl" for="pq" style="margin:0">Search<input id="pq" type="search" placeholder="Vendor or labour name" value="${esc(S.partyQ||"")}" autocomplete="off"></label>
+    <div class="list" id="plistv">${list.map(r => `<button class="tx" data-act="ledger" data-k="${esc(r.key)}" style="grid-template-columns:minmax(0,1fr) auto">
+      <span style="min-width:0"><span class="t1" style="display:block">${esc(r.name)}</span><span class="t2" style="display:block">${esc([...r.cats].slice(0,3).join(", ") || "Payments only")} · ${r.projects.size} project${r.projects.size>1?"s":""}${r.last ? " · last " + fmtDate(r.last) : ""}</span></span>
+      <span class="amt num">${r.bal>=1 ? `<span style="color:var(--due)">${inr(r.bal)}</span><small class="muted">to pay</small>` : r.bal<=-1 ? `<span style="color:var(--in)">${inr(-r.bal)}</span><small class="muted">advance</small>` : `<span class="muted" style="font-weight:600">Settled</span><small class="muted">${short(r.billed)} billed</small>`}</span></button>`).join("") || `<div class="none">No party matches "${esc(S.partyQ)}".</div>`}</div>`;
+  const inp = $("#pq");
+  inp.addEventListener("input", () => { S.partyQ = inp.value; const pos = inp.selectionStart; renderParties(); const i2 = $("#pq"); i2.focus(); try { i2.setSelectionRange(pos, pos); } catch {} });
+}
+
+/* Ledger rows for one party: bills raise the balance, payments lower it. */
+function ledgerRows(key, pid){
+  const rows = [];
+  for (const t of S.txns){
+    if (norm(t.party)!==key || (pid && t.projectId!==pid)) continue;
+    const p = proj(t.projectId), pname = p ? p.name : "";
+    if (t.kind==="exp"){
+      rows.push({t, date:t.date, created:t.created||0, ord:0, details:[t.category, t.billNo ? "Bill " + t.billNo : "", t.note].filter(Boolean).join(" · ") || "Bill", pname, bill:n(t.amount), paid:0});
+      if (n(t.paid) >= 1) rows.push({t, date:t.date, created:t.created||0, ord:1, details:"Paid with bill" + (t.mode ? " · " + t.mode : ""), pname, bill:0, paid:n(t.paid)});
+    } else if (t.kind==="pay"){
+      rows.push({t, date:t.date, created:t.created||0, ord:1, details:"Payment" + (t.mode ? " · " + t.mode : "") + (t.note ? " · " + t.note : ""), pname, bill:0, paid:n(t.amount)});
+    }
+  }
+  rows.sort((a,b) => (a.date||"").localeCompare(b.date||"") || a.created-b.created || a.ord-b.ord);
+  let bal = 0; for (const r of rows){ bal += r.bill - r.paid; r.bal = bal; }
+  return rows;
+}
+function balText(v){ return v>=1 ? inr(v) + " due" : v<=-1 ? inr(-v) + " adv" : "Nil"; }
+function renderLedger(){
+  const g = partyGroups().find(r => r.key===S.party);
+  if (!g){ S.view="parties"; return renderParties(); }
+  const pids = [...g.projects].filter(id => proj(id));
+  if (S.ledgerProj && !pids.includes(S.ledgerProj)) S.ledgerProj = "";
+  const rows = ledgerRows(g.key, S.ledgerProj);
+  const billed = rows.reduce((x,r)=>x+r.bill,0), paid = rows.reduce((x,r)=>x+r.paid,0), bal = billed - paid;
+  header("Ledger", g.name.length > 28 ? g.name.slice(0,27) + "…" : g.name, true, `<button class="btn small" data-act="party-rename">Rename</button>`);
+  let h = `<div class="ph"><h1>${esc(g.name)}</h1><div class="meta">${esc([...g.cats].join(", "))}</div></div>
+    <div class="strip" style="grid-template-columns:repeat(3,minmax(0,1fr))">${cell("Total billed", short(billed), "out")}${cell("Total paid", short(paid), "")}${cell(bal<=-1 ? "Advance with them" : "Balance to pay", short(Math.abs(bal)), bal<=-1 ? "in" : "due")}</div>`;
+  if (pids.length > 1){
+    h += `<div class="tabs" role="group" aria-label="Filter by project"><button class="tab" data-act="ledger-proj" data-p="" aria-pressed="${!S.ledgerProj}">All projects</button>${pids.map(id => { const pr = proj(id), st = ledgerRows(g.key, id); const b = st.length ? st[st.length-1].bal : 0;
+      return `<button class="tab" data-act="ledger-proj" data-p="${id}" aria-pressed="${S.ledgerProj===id}">${esc(pr.name.replace(/^Example – /,""))} · ${balText(b)}</button>`; }).join("")}</div>`;
+  }
+  h += `<div class="ledger-wrap"><table class="ltable num"><thead><tr><th>Date</th><th>Details</th><th class="r">Bill</th><th class="r">Paid</th><th class="r">Balance</th></tr></thead><tbody>`;
+  h += rows.length ? rows.map(r => `<tr data-act="tx" data-id="${r.t.id}" tabindex="0"><td class="d">${esc(fmtDate(r.date).replace(/ \d{4}$/,""))}<span>${esc((r.date||"").slice(0,4))}</span></td><td class="det">${esc(r.details)}${!S.ledgerProj && pids.length>1 ? `<span>${esc(r.pname)}</span>` : ""}</td><td class="r" data-l="Bill">${r.bill ? inr(r.bill) : ""}</td><td class="r" data-l="Paid" style="color:var(--in)">${r.paid ? inr(r.paid) : ""}</td><td class="r b" data-l="Bal." style="color:${r.bal>=1?"var(--due)":r.bal<=-1?"var(--in)":"var(--muted)"}">${balText(r.bal)}</td></tr>`).join("")
+    : `<tr><td colspan="5" class="none">No entries for this project.</td></tr>`;
+  h += `</tbody><tfoot><tr><td colspan="2">Closing balance</td><td class="r" data-l="Billed">${inr(billed)}</td><td class="r" data-l="Paid">${inr(paid)}</td><td class="r b" data-l="Balance">${balText(bal)}</td></tr></tfoot></table></div>
+    <div class="sec-row">${bal>=1 ? `<button class="btn primary" data-act="ledger-pay">Record payment</button>` : ""}<button class="btn" data-act="ledger-share">Copy statement</button><button class="btn" data-act="ledger-csv">Export CSV</button></div>
+    <p class="hint">Tap any row to see or edit that entry. "Copy statement" copies a summary you can paste into WhatsApp to agree the balance with ${esc(g.name)}.</p>`;
+  $("#main").innerHTML = h;
+}
+function ledgerStatement(){
+  const g = partyGroups().find(r => r.key===S.party); const rows = ledgerRows(S.party, S.ledgerProj);
+  const pr = S.ledgerProj ? proj(S.ledgerProj) : null;
+  const billed = rows.reduce((x,r)=>x+r.bill,0), paid = rows.reduce((x,r)=>x+r.paid,0), bal = billed - paid;
+  const lines = [`*Statement: ${g.name}*`, pr ? `Project: ${pr.name}` : "All projects", `As on ${fmtDate(today())}`, ""];
+  for (const r of rows) lines.push(`${fmtDate(r.date)} – ${r.bill ? "Bill " + inr(r.bill) : "Paid " + inr(r.paid)}${r.t.billNo && r.bill ? " (" + r.t.billNo + ")" : ""}`);
+  lines.push("", `Total billed: ${inr(billed)}`, `Total paid: ${inr(paid)}`, bal>=1 ? `*Balance payable: ${inr(bal)}*` : bal<=-1 ? `*Advance paid: ${inr(-bal)}*` : "*Account settled*");
+  return lines.join("\n");
+}
+function renameParty(){
+  const g = partyGroups().find(r => r.key===S.party);
+  const others = partyGroups().filter(r => r.key!==g.key).map(r => `<option value="${esc(r.name)}">`).join("");
+  const count = S.txns.filter(t => norm(t.party)===g.key).length;
+  openSheet(`<div class="sh-head"><h3>Rename or merge</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <form class="f" id="rf">
+    <label class="fl">New name<input id="r-name" list="rlist" required value="${esc(g.name)}"><datalist id="rlist">${others}</datalist></label>
+    <p class="hint" id="r-hint">Changes the name on all ${count} entries for this party.</p>
+    <div class="f-actions"><button class="btn primary" type="submit">Save name</button></div>
+  </form>`);
+  const inp = $("#r-name"), hint = $("#r-hint");
+  inp.addEventListener("input", () => { const o = partyGroups().find(r => r.key===norm(inp.value) && r.key!==g.key); hint.textContent = o ? `"${o.name}" already exists. Saving merges both into one ledger (${count} entries move over).` : `Changes the name on all ${count} entries for this party.`; hint.style.color = o ? "var(--due)" : ""; });
+  $("#rf").addEventListener("submit", async ev => { ev.preventDefault();
+    const name = inp.value.trim(); if (!name) return;
+    const target = partyGroups().find(r => r.key===norm(name)); const finalName = target ? target.name : name;
+    closeSheet();
+    await run(async () => { for (const t of S.txns.filter(t => norm(t.party)===g.key)) await store.saveTxn({...t, party:finalName}); }, target && target.key!==g.key ? "Merged into " + finalName : "Renamed to " + finalName);
+    S.view = "ledger"; S.party = norm(finalName); render();
+  });
 }
 
 /* ---------- sheets ---------- */
@@ -806,7 +924,14 @@ document.addEventListener("click", async ev => {
   if (act==="scrim" && ev.target!==a) return;
   switch (act){
     case "scrim": case "close": closeSheet(); break;
-    case "back": S.view = CFG ? "home" : "connect"; render(); break;
+    case "back": S.view = !CFG ? "connect" : S.view==="ledger" ? "parties" : "home"; render(); break;
+    case "ledger": S.view="ledger"; S.party=a.dataset.k; S.ledgerProj=""; window.scrollTo(0,0); render(); break;
+    case "ledger-proj": S.ledgerProj=a.dataset.p; render(); break;
+    case "ledger-pay": { const g = partyGroups().find(r => r.key===S.party); const pid = S.ledgerProj || (duesList(null).find(r => norm(r.party)===S.party && r.due>0) || {}).projectId; const d = duesList(pid).find(r => norm(r.party)===S.party); entryForm("pay", null, {projectId:pid, party:g.name, amount: d && d.due>0 ? Math.round(d.due) : ""}); break; }
+    case "ledger-share": { const txt = ledgerStatement(); const done = () => toast("Statement copied. Paste it in WhatsApp."); const fb = () => { openSheet(`<div class="sh-head"><h3>Statement</h3><button class="x" data-act="close" aria-label="Close">×</button></div><textarea id="stm" readonly style="width:100%;height:50vh;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:8px;font-size:13px">${esc(txt)}</textarea>`); const t=$("#stm"); t.focus(); t.select(); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fb); else fb(); break; }
+    case "ledger-csv": { const g = partyGroups().find(r => r.key===S.party); exportCSV([["Date","Project","Details","Bill","Paid","Balance"], ...ledgerRows(S.party, S.ledgerProj).map(r => [r.date, r.pname, r.details, r.bill||"", r.paid||"", r.bal])], "ledger-" + g.name.replace(/[^\w\- ]+/g,"").trim() + ".csv"); break; }
+    case "party-rename": renameParty(); break;
     case "settings": if (!CFG) break; S.view="settings"; window.scrollTo(0,0); render(); break;
     case "connect": S.view="connect"; render(); break;
     case "go-local": CFG = {mode:"local"}; LS.set("sk.cfg", CFG); queue = []; LS.set("sk.queue", queue); S.view="home"; render(); toast("Saving on this phone"); break;
@@ -836,7 +961,7 @@ document.addEventListener("click", async ev => {
   }
 });
 document.addEventListener("change", ev => { if (ev.target.id==="bm"){ S.billMonth = ev.target.value; render(); } if (ev.target.id==="restore" && ev.target.files[0]) restoreBackup(ev.target.files[0]); });
-document.addEventListener("keydown", ev => { if (ev.key==="Escape" && $("#layer").innerHTML) closeSheet(); });
+document.addEventListener("keydown", ev => { if (ev.key==="Enter" && ev.target.matches && ev.target.matches("tr[data-act=tx]")) ev.target.click(); if (ev.key==="Escape" && $("#layer").innerHTML) closeSheet(); });
 
 /* ---------- boot ---------- */
 function boot(){
