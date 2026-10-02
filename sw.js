@@ -1,6 +1,6 @@
 // Site Khata offline support: keeps the app itself available without internet.
 // Your entries are not stored here; they live in the phone's storage and your Google Sheet.
-const VERSION = "sk-v5";
+const VERSION = "sk-v6";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "google-sheet-script.gs", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", e => {

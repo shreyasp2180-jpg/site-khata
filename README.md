@@ -2,13 +2,15 @@
 
 A phone-friendly ledger for civil contractors and interior designers. For each project it records money received from the client, every bill and site expense, payments to vendors and labour, GST and receipt photos. It then works out the balance to collect, vendor dues, cash in hand and margin.
 
+It also handles labour: mark daily attendance (present, half day, absent, overtime) per site, record kharchi (advances), and on payday (Monday by default) pay each worker's week in one tap, with kharchi deducted automatically.
+
 It runs in any browser and can be added to the home screen like an app. It keeps working on site with no signal and syncs when you're back online.
 
 ## Where the data is saved
 
 When you first open the app, you choose one of these:
 
-- **Google Sheet (recommended).** Entries are saved to a Google Sheet in your own Google account: a **Projects** tab and an **Entries** tab. Receipt photos go to a Drive folder called *Site Khata receipts*. Nothing is stored on GitHub or anywhere else.
+- **Google Sheet (recommended).** Entries are saved to a Google Sheet in your own Google account: a **Projects**, **Entries**, **Workers** and **Attendance** tabs. Receipt photos go to a Drive folder called *Site Khata receipts*. Nothing is stored on GitHub or anywhere else.
 - **This phone only.** Everything stays in the phone's browser. Use **Settings → Download backup** regularly.
 
 ## One-time Google Sheet setup (about 15 minutes, easiest on a laptop)
@@ -23,8 +25,9 @@ When you first open the app, you choose one of these:
 
 "Anyone" only means the app can reach your script. Every request must include your PIN, so don't share the PIN or the URL with anyone else.
 
-### If you change the script later
-Use **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy**. This keeps the same URL, so the app doesn't need to be set up again.
+### Updating the script
+When the app says the Google Sheet script is out of date, go to **Settings → Google Sheet script → Copy latest script** and follow the steps shown there.
+Always update the existing deployment with **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy**. This keeps the same URL, so the app doesn't need to be set up again.
 
 ## Install on the phone
 Open the app link in Chrome, then use **⋮ → Add to Home screen**. On iPhone, use Safari: **Share → Add to Home Screen**.

@@ -53,6 +53,39 @@ body.setup{padding-bottom:24px}
 .steps ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .steps a{color:var(--accent)}
 .banner .btn{margin-left:6px;vertical-align:middle}
+.payday{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--due-soft);color:var(--due)}
+.payday div{flex:1;min-width:0;display:flex;flex-direction:column}
+.payday span{font-size:13px}
+.steps-ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.daynav{display:flex;align-items:center;gap:10px}
+.daynav .back:disabled{opacity:.35}
+.daylbl{flex:1;display:flex;flex-direction:column;align-items:center;font-weight:700;font-size:16px;position:relative}
+.daylbl small{font-weight:500;font-size:12.5px;color:var(--muted)}
+.daylbl input[type=date]{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 8px;font-size:13px;margin-top:4px}
+.arow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;align-items:center;padding:11px 14px;border-top:1px solid var(--line)}
+.arow:first-child{border-top:0}
+.aname{display:flex;flex-direction:column;min-width:0}
+.aname b{font-weight:600;overflow-wrap:anywhere}
+.aname span{font-size:12.5px;color:var(--muted)}
+.aseg{display:flex;gap:4px}
+.aseg button{width:42px;height:38px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:800;font-family:var(--f-display);font-size:15px;color:var(--muted)}
+.aseg button.s-P[aria-pressed="true"]{background:var(--in);border-color:var(--in);color:var(--surface)}
+.aseg button.s-H[aria-pressed="true"]{background:var(--due);border-color:var(--due);color:var(--surface)}
+.aseg button.s-A[aria-pressed="true"]{background:var(--out);border-color:var(--out);color:var(--surface)}
+.aextra{grid-column:1/-1;display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.ot{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);font-weight:600;margin-right:auto}
+.ot input{width:56px;border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:5px 7px;font-size:14px}
+.wrow{padding:11px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.wrow:first-child{border-top:0}
+.wtop{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center}
+.wamt{text-align:right;display:flex;flex-direction:column}
+.wamt span{font-size:11.5px;color:var(--muted)}
+.wdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wd{display:flex;flex-direction:column;align-items:center;font-size:12px;font-weight:700;padding:3px 0;border-radius:6px;background:var(--surface-2);color:var(--muted)}
+.wd i{font-style:normal;font-weight:500;font-size:10px}
+.wd.s-P{background:var(--in-soft);color:var(--in)}
+.wd.s-H{background:var(--due-soft);color:var(--due)}
+.wd.s-A{background:var(--out-soft);color:var(--out)}
 .ledger-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 .ltable{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
 .ltable th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;text-align:left;padding:9px 10px;background:var(--surface-2);border-bottom:1px solid var(--line)}
@@ -101,7 +134,7 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-block:12px}
 .brand small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;color:var(--muted);margin-top:3px}
 .back{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:36px;height:36px;display:grid;place-items:center;flex:none}
 .spacer{flex:1}
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;font-weight:600;font-size:14px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;font-weight:600;font-size:14px;white-space:nowrap}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn.danger{color:var(--out);border-color:var(--out)}
 .btn.small{padding:5px 10px;font-size:13px}
@@ -250,9 +283,9 @@ label.fl{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight
 </main>
 <nav class="bottom" aria-label="Sections"><div class="wrap">
   <button class="nb" data-nav="home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-7h6v7"/></svg>Projects</button>
-  <button class="nb" data-nav="dues"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Dues</button>
+  <button class="nb" data-nav="labour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15a8 8 0 0 1 16 0"/><path d="M12 7v4M9 8.5 10 12M15 8.5 14 12"/><path d="M2.5 15h19v2.5h-19z"/><path d="M8 21h8"/></svg>Labour</button>
   <button class="fab" id="fab" aria-label="Add entry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button class="nb" data-nav="bills"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Bills &amp; GST</button>
+  <button class="nb" data-nav="bills"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Bills</button>
   <button class="nb" data-nav="parties"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.8 3 2.6 3.5 5.2"/></svg>Parties</button>
 </div></nav>
 <div id="layer"></div>
@@ -264,7 +297,8 @@ const MODES = ["UPI","Cash","Bank transfer","Cheque"];
 const TYPES = ["Civil","Interior","Civil + Interior"];
 const STATUS = {active:"Active",hold:"On hold",done:"Completed"};
 
-const S = { projects:[], txns:[], view:"home", pid:null, tab:"all", billMonth:"all", sync:null };
+const S = { projects:[], txns:[], workers:[], att:[], view:"home", pid:null, tab:"all", billMonth:"all", sync:null, scriptVersion:null, needsUpdate:false };
+const NEED_SCRIPT = 3; // Sheet script version that stores workers & attendance
 
 /* ---------- helpers ---------- */
 const $ = (s, r=document) => r.querySelector(s);
@@ -347,7 +381,7 @@ const idb = (() => {
 })();
 let CFG = LS.get("sk.cfg", null);           // {mode:"sheet"|"local", url, pin}
 let queue = LS.get("sk.queue", []);         // changes waiting to reach the Sheet
-function persist(){ if (!LS.set("sk.data", {projects:S.projects, txns:S.txns})) toast("Phone storage is full. Download a backup and remove old photos."); }
+function persist(){ if (!LS.set("sk.data", {projects:S.projects, txns:S.txns, workers:S.workers, att:S.att})) toast("Phone storage is full. Download a backup and remove old photos."); }
 
 /* ---------- storage: Google Sheet ---------- */
 async function api(body, cfg = CFG){
@@ -372,26 +406,37 @@ async function flush(){
   if (flushing || !CFG || CFG.mode!=="sheet") return;
   flushing = true;
   try {
-    while (queue.length){
+    let i = 0, held = 0;
+    while (i < queue.length){
       setSync("syncing");
-      const op = queue[0], body = {...op}; delete body.photoId;
+      const op = queue[i], body = {...op}; delete body.photoId;
       if (op.photoId) body.photo = await idb.get(op.photoId);
-      const r = await api(body);
+      let r;
+      try { r = await api(body); }
+      catch(e){ if (e.code==="server" && /Unknown action/.test(e.message||"")){ held++; i++; continue; } throw e; }
       if (op.action==="saveEntry" && r.receiptId){ const t = S.txns.find(x => x.id===op.entry.id); if (t){ t.receiptId = r.receiptId; t.receiptUrl = r.receiptUrl; persist(); } }
-      queue.shift(); LS.set("sk.queue", queue);
+      queue.splice(i, 1); LS.set("sk.queue", queue);
     }
-    setSync("ok");
+    S.needsUpdate = held > 0;
+    setSync("ok"); if (held) render();
   } catch(e){ setSync(e.code==="offline" ? "offline" : "error", e); }
   finally { flushing = false; }
 }
 async function pull(){
   if (!CFG || CFG.mode!=="sheet") return;
   await flush();
-  if (queue.length) return;
+  if (queue.length && !S.needsUpdate) return;
   try {
     setSync("syncing");
     const r = await api({action:"load"});
+    const heldW = queue.filter(o => o.action==="saveWorker").map(o => o.worker), heldA = queue.filter(o => o.action==="saveAtt").flatMap(o => o.items), delA = new Set(queue.filter(o => o.action==="deleteAtt").flatMap(o => o.ids));
+    S.scriptVersion = r.version || 1;
     S.projects = r.projects || []; S.txns = r.txns || []; allocSrc = null;
+    if (r.workers) { S.workers = r.workers; S.att = r.attendance || []; }
+    // keep labour changes still waiting on this phone (e.g. while the Sheet script is out of date)
+    for (const w of heldW){ const i = S.workers.findIndex(x => x.id===w.id); if (i>=0) S.workers[i] = w; else S.workers.push(w); }
+    for (const a of heldA){ const i = S.att.findIndex(x => x.id===a.id); if (i>=0) S.att[i] = a; else S.att.push(a); }
+    S.att = S.att.filter(a => !delA.has(a.id));
     persist(); setSync("ok"); render();
   } catch(e){ setSync(e.code==="offline" ? "offline" : "error", e); }
 }
@@ -405,13 +450,16 @@ const store = {
   async deleteProject(id){ for (const t of S.txns.filter(t => t.projectId===id)) idb.del(t.id); S.projects = S.projects.filter(p => p.id!==id); S.txns = S.txns.filter(t => t.projectId!==id); commit({action:"deleteProject", id}); },
   async saveTxn(t, photo){ if (photo){ await idb.put(t.id, photo); t.receipt = true; } const i = S.txns.findIndex(x => x.id===t.id); if (i>=0) S.txns[i] = t; else S.txns.push(t); commit({action:"saveEntry", entry:t, photoId: photo ? t.id : null}); },
   async deleteTxn(id){ S.txns = S.txns.filter(t => t.id!==id); idb.del(id); commit({action:"deleteEntry", id}); },
+  async saveWorker(w){ const i = S.workers.findIndex(x => x.id===w.id); if (i>=0) S.workers[i] = w; else S.workers.push(w); commit({action:"saveWorker", worker:w}); },
+  async saveAtt(items){ for (const a of items){ const i = S.att.findIndex(x => x.id===a.id); if (i>=0) S.att[i] = a; else S.att.push(a); } commit({action:"saveAtt", items}); },
+  async deleteAtt(ids){ const d = new Set(ids); S.att = S.att.filter(a => !d.has(a.id)); commit({action:"deleteAtt", ids}); },
   async getReceipt(t){
     const local = await idb.get(t.id); if (local) return local;
     if (CFG && CFG.mode==="sheet" && t.receiptId){ const r = await api({action:"getReceipt", receiptId:t.receiptId}); idb.put(t.id, r.photo); return r.photo; }
     return null;
   }
 };
-function fail(e){ toast(e && e.code ? syncMsg(e) : "Something went wrong. Try again."); }
+function fail(e){ if (!(e && e.code)) console.error(e); toast(e && e.code ? syncMsg(e) : "Something went wrong. Try again."); }
 async function run(fn, ok){ try { await fn(); if (ok) toast(ok); return true; } catch(e){ fail(e); return false; } }
 
 /* ---------- sync pill ---------- */
@@ -433,13 +481,13 @@ function saveFile(name, text, type){
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 function downloadBackup(){
-  saveFile("site-khata-backup-" + today() + ".json", JSON.stringify({app:"site-khata", version:1, exported:new Date().toISOString(), projects:S.projects, txns:S.txns}, null, 1), "application/json");
+  saveFile("site-khata-backup-" + today() + ".json", JSON.stringify({app:"site-khata", version:2, exported:new Date().toISOString(), projects:S.projects, txns:S.txns, workers:S.workers, att:S.att}, null, 1), "application/json");
   LS.set("sk.lastBackup", Date.now()); render(); toast("Backup downloaded. Keep it on Drive or WhatsApp.");
 }
 async function restoreBackup(file){
   let d; try { d = JSON.parse(await file.text()); } catch { toast("That file isn't a Site Khata backup."); return; }
   if (!d || d.app!=="site-khata" || !Array.isArray(d.projects) || !Array.isArray(d.txns)){ toast("That file isn't a Site Khata backup."); return; }
-  await run(async () => { for (const p of d.projects) await store.saveProject(p); for (const t of d.txns) await store.saveTxn(t); }, "Restored " + d.projects.length + " projects and " + d.txns.length + " entries");
+  await run(async () => { for (const p of d.projects) await store.saveProject(p); for (const t of d.txns) await store.saveTxn(t); for (const w of (d.workers||[])) await store.saveWorker(w); if ((d.att||[]).length) await store.saveAtt(d.att); }, "Restored " + d.projects.length + " projects and " + d.txns.length + " entries");
 }
 
 
@@ -449,6 +497,7 @@ function nudge(){
     const bk = LS.get("sk.lastBackup", 0);
     if (Date.now() - bk > 14*864e5) h = `<div class="banner">Your entries are only on this phone. ${bk ? "Your last backup is over 2 weeks old." : "You haven't made a backup yet."} <button class="btn small" data-act="backup">Download backup</button></div>`;
   }
+  if (CFG && CFG.mode==="sheet" && (S.needsUpdate || (S.scriptVersion && S.scriptVersion < NEED_SCRIPT && (S.workers.length || S.view==="labour"))) && S.view!=="settings") h = `<div class="banner">Your Google Sheet script is out of date, so labour attendance is saved on this phone only for now. <button class="btn small" data-act="settings">Update script</button></div>`;
   if (CFG && CFG.mode==="sheet" && S.sync && S.sync.state==="error" && S.view!=="settings") h = `<div class="banner">${esc(syncMsg(S.sync.err))} <button class="btn small" data-act="settings">Open settings</button></div>`;
   if (w.innerHTML !== h) w.innerHTML = h;
 }
@@ -515,14 +564,20 @@ function renderConnect(){
         S.txns = [...r.txns, ...localT.filter(t => !tids.has(t.id))];
         for (const p of localP) queue.push({action:"saveProject", project:p});
         for (const t of localT) queue.push({action:"saveEntry", entry:t, photoId: t.receipt && !t.receiptId ? t.id : null});
+        const localW = S.workers, localA = S.att;
+        for (const w of localW) queue.push({action:"saveWorker", worker:w});
+        if (localA.length) queue.push({action:"saveAtt", items:localA});
+        if (r.workers){ const wid = new Set(r.workers.map(w => w.id)), aid = new Set((r.attendance||[]).map(a => a.id)); S.workers = [...r.workers, ...localW.filter(w => !wid.has(w.id))]; S.att = [...(r.attendance||[]), ...localA.filter(a => !aid.has(a.id))]; }
         LS.set("sk.queue", queue);
-      } else { S.projects = r.projects; S.txns = r.txns; queue = []; LS.set("sk.queue", queue); }
+      } else { S.projects = r.projects; S.txns = r.txns; S.workers = r.workers || []; S.att = r.attendance || []; queue = []; LS.set("sk.queue", queue); }
+      S.scriptVersion = r.version || 1;
       persist(); S.view = "home"; setSync("ok"); render(); toast("Connected to your Google Sheet"); flush();
     } catch(e){ msg.innerHTML = `<div class="confirm">${esc(syncMsg(e))}</div>`; go.disabled = false; go.textContent = "Connect Google Sheet"; }
   });
 }
 function renderSettings(){
   header("Settings", "Saving, backup and export", false);
+  loadScriptText();
   const last = LS.get("sk.lastSync", 0), bk = LS.get("sk.lastBackup", 0);
   const when = ts => ts ? new Date(ts).toLocaleString("en-IN", {day:"numeric", month:"short", hour:"numeric", minute:"2-digit"}) : "never";
   const sheet = CFG && CFG.mode==="sheet";
@@ -534,6 +589,16 @@ function renderSettings(){
       <div class="f-actions"><button class="btn primary" data-act="sync">Sync now</button><button class="btn" data-act="connect">Change connection</button></div>`
     : `<p class="muted" style="margin:0">Connect a Google Sheet to keep entries safe if this phone is lost, and to use them on a laptop too.</p><div class="f-actions"><button class="btn primary" data-act="connect">Connect Google Sheet</button></div>`}
   </section>
+  <section class="setup-card">
+    <div class="sc-head"><h3>Labour payday</h3></div>
+    <label class="fl" for="payday">Wages are paid every<select id="payday">${WEEKDAYS.map((d,i) => `<option value="${i}" ${i===payday()?"selected":""}>${d}</option>`).join("")}</select></label>
+    <p class="muted" style="margin:0">Each wage week runs ${WEEKDAYS[payday()]} to ${WEEKDAYS[(payday()+6)%7]} and is paid on the following ${WEEKDAYS[payday()]}.</p>
+  </section>
+  ${sheet ? `<section class="setup-card">
+    <div class="sc-head"><h3>Google Sheet script</h3>${S.scriptVersion ? `<span class="pill ${S.scriptVersion >= NEED_SCRIPT ? "ok" : "warn"}">${S.scriptVersion >= NEED_SCRIPT ? "Up to date" : "Update needed"}</span>` : ""}</div>
+    <p class="muted" style="margin:0">${S.scriptVersion && S.scriptVersion < NEED_SCRIPT ? "A newer script is needed to save labour attendance and workers to your Sheet. Until then they stay on this phone." : "If the app asks you to update the script, copy the latest version here."}</p>
+    <ol class="steps-ol"><li><button type="button" class="btn small" data-act="copy-script">Copy latest script</button></li><li>In the Sheet: <b>Extensions → Apps Script</b>, select all, paste.</li><li>Put your PIN back on the <span class="mono">const PIN</span> line, then <b>Save</b>.</li><li><b>Deploy → Manage deployments → ✏️ → Version: New version → Deploy</b>. Don't use "New deployment".</li><li>Come back and tap <b>Sync now</b>.</li></ol>
+  </section>` : ""}
   <section class="setup-card">
     <div class="sc-head"><h3>Backup</h3></div>
     <p class="muted" style="margin:0">A backup file holds all projects and entries (not photos). Last backup: ${when(bk)}.</p>
@@ -578,10 +643,10 @@ async function clearExamples(){
 /* ---------- render ---------- */
 function render(){
   document.body.classList.toggle("setup", S.view==="connect");
-  document.querySelectorAll(".nb").forEach(b => b.toggleAttribute("aria-current", b.dataset.nav === (S.view==="project" ? "home" : S.view==="ledger" ? "parties" : S.view)));
+  document.querySelectorAll(".nb").forEach(b => b.toggleAttribute("aria-current", b.dataset.nav === (S.view==="project" || S.view==="dues" ? "home" : S.view==="ledger" ? "parties" : S.view)));
   document.querySelectorAll(".nb[aria-current]").forEach(b=>b.setAttribute("aria-current","page"));
   if (S.view==="project" && !proj(S.pid)) S.view="home";
-  ({home:renderHome, project:renderProject, dues:renderDues, bills:renderBills, parties:renderParties, ledger:renderLedger, connect:renderConnect, settings:renderSettings})[S.view]();
+  ({home:renderHome, project:renderProject, dues:renderDues, bills:renderBills, parties:renderParties, ledger:renderLedger, labour:renderLabour, connect:renderConnect, settings:renderSettings})[S.view]();
   paintPill(); nudge();
 }
 function header(title, sub, back, right=""){
@@ -602,7 +667,9 @@ function renderHome(){
     h = `<div class="empty"><h3>Start your first project</h3><p>Add a project with its client and contract value. Then log every payment received, every bill and every payment to vendors or labour. The khata works out balances, dues and margin for you.</p>
       <div class="row"><button class="btn primary" data-act="new-project">Add a project</button><button class="btn" data-act="examples">Load 2 example projects</button></div></div>`;
   } else {
-    h += `<section class="sec-row"><h2 class="sec">Running projects · ${act.length}</h2></section>
+    const lastWk = addDays(weekStartOf(today()), -7), wd = wagesDue(lastWk);
+    if (wd.total >= 1 && (today() >= addDays(lastWk, 7))) h += `<div class="payday"><div><b>${dow(today())===payday() ? "Labour payday today" : "Labour wages pending"}</b><span>${inr(wd.total)} for ${weekLabel(lastWk)}</span></div><button class="btn primary small" data-act="lb-payday">Review &amp; pay</button></div>`;
+    h += `<section class="sec-row"><h2 class="sec">Running projects · ${act.length}</h2><div class="spacer"></div><button class="btn small" data-act="go-dues">All dues</button></section>
       <div class="strip">${cell("Received from clients", short(rec), "in")}${cell("Paid out", short(paid), "out")}${cell("Owed to vendors", short(dues), "due")}${cell("Yet to receive", short(bal), "", "on contract value")}</div>`;
     h += `<section class="sec-row"><h2 class="sec">All projects</h2><div class="spacer"></div>${hasEg?`<button class="btn small" data-act="clear-examples">Remove examples</button>`:""}</section><div class="cards">`;
     for (const p of sorted){
@@ -808,6 +875,195 @@ function renameParty(){
   });
 }
 
+/* ---------- labour: attendance & weekly wages ---------- */
+const ROLES = ["Mistri","Helper","Carpenter","Painter","Plumber","Electrician","Fabricator","Tile fitter","Watchman","Other"];
+const WEEKDAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const FACTOR = {P:1, H:0.5, A:0};
+const payday = () => LS.get("sk.payday", 1);
+const isoOf = x => new Date(x - x.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const addDays = (d, k) => { const x = new Date(d + "T00:00:00"); x.setDate(x.getDate() + k); return isoOf(x); };
+const dow = d => new Date(d + "T00:00:00").getDay();
+const dShort = d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", {day:"numeric", month:"short"});
+const dDay = d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", {weekday:"short", day:"numeric", month:"short"});
+/* A wage week is 7 days starting on the payday weekday; it is paid on the next payday. */
+function weekStartOf(d){ return addDays(d, -((dow(d) - payday() + 7) % 7)); }
+const weekLabel = st => dShort(st) + " – " + dShort(addDays(st, 6));
+const worker = id => S.workers.find(w => w.id===id);
+const otRateOf = w => n(w.otRate) || Math.round(n(w.rate) / 8);
+const wageFor = (w, status, ot) => Math.round(n(w.rate) * (FACTOR[status] || 0) + n(ot) * otRateOf(w));
+const daysStr = v => (Math.floor(v) || (v % 1 ? "" : "0")) + (v % 1 ? "½" : "");
+const payToOf = w => (w.payTo || "").trim() || w.name;
+
+function activeProjects(){ return S.projects.filter(p => p.status !== "done"); }
+function labourPid(){
+  const act = activeProjects();
+  if (!S.lpid || !act.some(p => p.id===S.lpid)) S.lpid = (act.find(p => p.id===S.pid) || act[0] || {}).id || null;
+  return S.lpid;
+}
+/* Kharchi (advances) not yet deducted from wages, for one worker on one project. */
+function advanceOut(wid, pid){
+  let v = 0;
+  for (const t of S.txns){ if (t.workerId!==wid || t.projectId!==pid) continue; if (t.kind==="pay") v += n(t.amount); else if (t.kind==="exp") v -= n(t.amount) - n(t.paid); }
+  return Math.max(0, v);
+}
+function weekSummary(pid, st){
+  const end = addDays(st, 6), m = new Map();
+  for (const a of S.att){
+    if (a.projectId!==pid || a.date < st || a.date > end) continue;
+    const r = m.get(a.workerId) || {wid:a.workerId, name:(worker(a.workerId)||{}).name || a.worker, days:0, ot:0, gross:0, marks:{}};
+    r.days += FACTOR[a.status] || 0; r.ot += n(a.ot); r.gross += n(a.wage); r.marks[a.date] = a.status; m.set(a.workerId, r);
+  }
+  for (const t of S.txns){ if (t.kind==="exp" && t.week===st && t.projectId===pid && t.workerId){ const r = m.get(t.workerId) || {wid:t.workerId, name:(worker(t.workerId)||{}).name || t.party, days:0, ot:0, gross:0, marks:{}}; r.paidGross = (r.paidGross||0) + n(t.amount); m.set(t.workerId, r); } }
+  return [...m.values()].map(r => { r.paidGross = r.paidGross || 0; r.remaining = Math.round(r.gross - r.paidGross); r.adv = advanceOut(r.wid, pid); r.deduct = Math.max(0, Math.min(r.adv, r.remaining)); r.net = r.remaining - r.deduct; return r; })
+    .sort((a,b) => a.name.localeCompare(b.name));
+}
+function wagesDue(st){ let v = 0, best = null, bestV = 0; for (const p of activeProjects()){ const d = weekSummary(p.id, st).reduce((x,r) => x + Math.max(0, r.remaining), 0); v += d; if (d > bestV){ bestV = d; best = p.id; } } return {total:v, pid:best}; }
+
+function renderLabour(){
+  const pid = labourPid();
+  header("Labour", "Attendance & weekly wages", false, `<button class="btn small" data-act="worker-new">+ Worker</button>`);
+  if (!pid){ $("#main").innerHTML = `<div class="empty"><h3>Add a project first</h3><p>Attendance is marked per site, so create a running project before adding workers.</p><div class="row"><button class="btn primary" data-act="new-project">Add a project</button></div></div>`; return; }
+  S.ltab = S.ltab || "att"; S.ldate = S.ldate || today(); S.lweek = S.lweek || weekStartOf(today());
+  const act = activeProjects();
+  let h = `<div class="sec-row">${act.length > 1 ? `<label class="sec" for="lb-proj">Site</label><select id="lb-proj" class="select-inline">${act.map(p => `<option value="${p.id}" ${p.id===pid?"selected":""}>${esc(p.name)}</option>`).join("")}</select>` : `<h2 class="sec">${esc(proj(pid).name)}</h2>`}</div>
+    <div class="tabs" role="group" aria-label="Labour section">${[["att","Attendance"],["week","Week & pay"],["workers","Workers"]].map(([k,l]) => `<button class="tab" data-act="ltab" data-k="${k}" aria-pressed="${S.ltab===k}">${l}</button>`).join("")}</div>`;
+  if (S.ltab==="att") h += attendanceView(pid);
+  else if (S.ltab==="week") h += weekView(pid);
+  else h += workersView();
+  $("#main").innerHTML = h;
+}
+function siteWorkers(pid, date){
+  const marked = new Set(S.att.filter(a => a.projectId===pid && a.date===date).map(a => a.workerId));
+  return S.workers.filter(w => (w.active!==false && w.projectId===pid) || marked.has(w.id)).sort((a,b) => a.name.localeCompare(b.name));
+}
+function attendanceView(pid){
+  const d = S.ldate, list = siteWorkers(pid, d);
+  const recs = new Map(S.att.filter(a => a.projectId===pid && a.date===d).map(a => [a.workerId, a]));
+  if (!S.workers.length) return `<div class="empty"><h3>Add your workers</h3><p>Add each mistri, helper or carpenter once, with their daily rate and site. Then mark attendance here every day; on payday the app works out each person's week.</p><div class="row"><button class="btn primary" data-act="worker-new">Add a worker</button></div></div>`;
+  let p=0, hf=0, ab=0, wages=0; for (const r of recs.values()){ if (r.status==="P") p++; else if (r.status==="H") hf++; else ab++; wages += n(r.wage); }
+  const others = S.workers.filter(w => w.active!==false && !list.includes(w));
+  let h = `<div class="daynav"><button class="back" data-act="lday" data-k="-1" aria-label="Previous day">‹</button><label class="daylbl"><span>${esc(dDay(d))}${d===today()?" · Today":""}</span><input type="date" id="lb-date" value="${d}" max="${today()}"></label><button class="back" data-act="lday" data-k="1" aria-label="Next day" ${d>=today()?"disabled":""}>›</button></div>
+    <div class="strip">${cell("Present", p, "in")}${cell("Half day", hf, "due")}${cell("Absent", ab, "out")}${cell("Wages for the day", inr(wages))}</div>`;
+  if (!list.length) h += `<div class="list"><div class="none">No workers assigned to this site. Add one, or pick from another site below.</div></div>`;
+  else {
+    const unmarked = list.filter(w => !recs.has(w.id)).length;
+    h += `<div class="sec-row"><h2 class="sec">${list.length} worker${list.length>1?"s":""}</h2><div class="spacer"></div>${unmarked ? `<button class="btn small" data-act="all-present">Mark ${unmarked} present</button>` : ""}</div><div class="list">`;
+    for (const w of list){
+      const r = recs.get(w.id), st = r ? r.status : "";
+      h += `<div class="arow"><div class="aname"><b>${esc(w.name)}</b><span>${esc(w.role||"")} · ${inr(w.rate)}/day${r && n(r.wage) ? " · " + inr(r.wage) : ""}</span></div>
+        <div class="aseg" role="group" aria-label="Attendance for ${esc(w.name)}">${[["P","P","Present"],["H","½","Half day"],["A","A","Absent"]].map(([k,l,t]) => `<button data-act="mark" data-w="${w.id}" data-s="${k}" aria-pressed="${st===k}" title="${t}" class="s-${k}">${l}</button>`).join("")}</div>
+        <div class="aextra"><label class="ot">OT<input inputmode="decimal" data-ot="${w.id}" value="${r && n(r.ot) ? n(r.ot) : ""}" placeholder="0" aria-label="Overtime hours for ${esc(w.name)}">h</label><button class="btn small" data-act="kharchi" data-w="${w.id}">Kharchi</button></div></div>`;
+    }
+    h += `</div>`;
+  }
+  if (others.length) h += `<label class="fl" for="lb-add">Worked here from another site<select id="lb-add"><option value="">Choose a worker…</option>${others.map(w => `<option value="${w.id}">${esc(w.name)} · ${esc((proj(w.projectId)||{}).name || "no site")}</option>`).join("")}</select></label>`;
+  h += `<p class="hint">Tap P, ½ or A. Tap the same button again to clear it. Overtime hours are paid at each worker's OT rate.</p>`;
+  return h;
+}
+function weekView(pid){
+  const st = S.lweek, rows = weekSummary(pid, st), pay = addDays(st, 7);
+  const days = [...Array(7)].map((_, i) => addDays(st, i));
+  const due = rows.filter(r => r.remaining >= 1), tot = due.reduce((x,r) => x + r.net, 0);
+  let h = `<div class="daynav"><button class="back" data-act="lweek" data-k="-7" aria-label="Previous week">‹</button><div class="daylbl"><span>${weekLabel(st)}</span><small>Payday ${WEEKDAYS[payday()]} ${dShort(pay)}</small></div><button class="back" data-act="lweek" data-k="7" aria-label="Next week" ${st>=weekStartOf(today())?"disabled":""}>›</button></div>`;
+  if (!rows.length) return h + `<div class="list"><div class="none">No attendance marked on this site for this week.</div></div>`;
+  const gross = rows.reduce((x,r)=>x+r.gross,0), ded = due.reduce((x,r)=>x+r.deduct,0);
+  h += `<div class="strip">${cell("Wages earned", inr(gross))}${cell("Kharchi to deduct", inr(ded), "due")}${cell("To pay now", inr(tot), tot ? "out" : "")}${cell("Workers", rows.length)}</div><div class="list">`;
+  for (const r of rows){
+    h += `<div class="wrow"><div class="wtop"><div class="aname"><b>${esc(r.name)}</b><span>${daysStr(r.days)} day${r.days===1?"":"s"}${r.ot ? " + " + r.ot + " h OT" : ""} · earned ${inr(r.gross)}</span></div>
+      <div class="wamt num">${r.remaining >= 1 ? `<b>${inr(r.net)}</b>${r.deduct ? `<span>after ${inr(r.deduct)} kharchi</span>` : r.paidGross ? `<span>extra since last payment</span>` : ""}` : r.remaining <= -1 ? `<b style="color:var(--due)">Overpaid ${inr(-r.remaining)}</b>` : `<b style="color:var(--in)">Paid ✓</b>`}</div>
+      ${r.remaining >= 1 ? `<button class="btn small" data-act="pay-wages" data-w="${r.wid}">Pay</button>` : "<span></span>"}</div>
+      <div class="wdays">${days.map(d => `<span class="wd s-${r.marks[d]||"x"}" title="${dDay(d)}"><i>${new Date(d+"T00:00:00").toLocaleDateString("en-IN",{weekday:"narrow"})}</i>${r.marks[d]==="H" ? "½" : r.marks[d] || "–"}</span>`).join("")}</div></div>`;
+  }
+  h += `</div><div class="sec-row">${due.length > 1 ? `<button class="btn primary" data-act="pay-wages" data-w="">Pay all · ${inr(tot)}</button>` : ""}<button class="btn" data-act="copy-wages">Copy wage sheet</button></div>
+    <p class="hint">Paying records a Labour expense for each worker on this project. Kharchi given during or before the week is deducted automatically.</p>`;
+  return h;
+}
+function workersView(){
+  if (!S.workers.length) return `<div class="empty"><h3>No workers yet</h3><p>Add each person once with their daily rate. You can move them between sites any time.</p><div class="row"><button class="btn primary" data-act="worker-new">Add a worker</button></div></div>`;
+  const list = [...S.workers].sort((a,b) => (a.active===false) - (b.active===false) || a.name.localeCompare(b.name));
+  return `<div class="list">` + list.map(w => `<button class="tx" data-act="worker-edit" data-w="${w.id}" style="grid-template-columns:minmax(0,1fr) auto"><span style="min-width:0"><span class="t1" style="display:block">${esc(w.name)}${w.active===false ? ' <span class="chip">Inactive</span>' : ""}</span><span class="t2" style="display:block">${esc([w.role, (proj(w.projectId)||{}).name, w.payTo ? "paid via " + w.payTo : ""].filter(Boolean).join(" · "))}</span></span><span class="amt num">${inr(w.rate)}<small class="muted">per day</small></span></button>`).join("") + `</div>`;
+}
+
+function workerForm(w){
+  const e = w || {role:"Helper", projectId: labourPid(), active:true};
+  const parties = partyNames().map(x => `<option value="${esc(x)}">`).join("");
+  openSheet(`<div class="sh-head"><h3>${w ? "Edit worker" : "New worker"}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <form class="f" id="wf">
+    <label class="fl">Name<input id="w-name" required value="${esc(e.name)}" placeholder="e.g. Ramesh Pawar"></label>
+    <div class="fr"><label class="fl">Work<select id="w-role">${ROLES.map(r => `<option ${r===e.role?"selected":""}>${r}</option>`).join("")}</select></label><label class="fl">Site<select id="w-proj">${activeProjects().map(p => `<option value="${p.id}" ${p.id===e.projectId?"selected":""}>${esc(p.name)}</option>`).join("")}</select></label></div>
+    <div class="fr"><label class="fl">Daily rate (₹)<input id="w-rate" class="amt-in" inputmode="decimal" required value="${e.rate ?? ""}" placeholder="0"></label><label class="fl">OT rate per hour (₹)<input id="w-ot" inputmode="decimal" value="${e.otRate || ""}" placeholder="auto"></label></div>
+    <span class="hint" id="w-hint"></span>
+    <label class="fl">Paid through (optional)<input id="w-payto" list="wplist" value="${esc(e.payTo)}" placeholder="Mukadam or gang leader"><datalist id="wplist">${parties}</datalist></label>
+    <span class="hint">Leave empty if you pay this worker directly. If wages go through a mukadam, enter their name: payments then show in the mukadam's ledger.</span>
+    ${w ? `<label class="check"><input type="checkbox" id="w-active" ${e.active!==false?"checked":""}> Currently working</label>` : ""}
+    <div class="f-actions"><button class="btn primary" type="submit">${w ? "Save worker" : "Add worker"}</button></div>
+  </form>`);
+  const hint = () => { const r = n($("#w-rate").value); $("#w-hint").textContent = r ? `OT: ${inr(n($("#w-ot").value) || Math.round(r/8))} per hour${n($("#w-ot").value) ? "" : " (daily rate ÷ 8)"}.${w ? " A new rate applies to attendance marked from now on." : ""}` : ""; };
+  $("#w-rate").addEventListener("input", hint); $("#w-ot").addEventListener("input", hint); hint();
+  $("#wf").addEventListener("submit", async ev => { ev.preventDefault();
+    const nw = {...(w || {id:uid(), created:Date.now()}), name:$("#w-name").value.trim(), role:$("#w-role").value, projectId:$("#w-proj").value, rate:n($("#w-rate").value), otRate:n($("#w-ot").value), payTo:$("#w-payto").value.trim(), active: w ? $("#w-active").checked : true};
+    if (!nw.name || nw.rate <= 0){ toast("Enter a name and a daily rate"); return; }
+    closeSheet(); await run(() => store.saveWorker(nw), w ? "Worker saved" : nw.name + " added");
+  });
+}
+function attRecord(w, pid, d, status, ot, ex){ return {id:d + "_" + w.id + "_" + pid, date:d, projectId:pid, project:(proj(pid)||{}).name || "", workerId:w.id, worker:w.name, status, ot, wage:wageFor(w, status, ot), created: ex ? ex.created : Date.now()}; }
+async function markAtt(wid, status){
+  const w = worker(wid), pid = labourPid(), d = S.ldate, id = d + "_" + wid + "_" + pid, ex = S.att.find(a => a.id===id);
+  if (ex && ex.status===status) return run(() => store.deleteAtt([id]));
+  await run(() => store.saveAtt([attRecord(w, pid, d, status, ex ? n(ex.ot) : 0, ex)]));
+}
+async function setOT(wid, ot){
+  const w = worker(wid), pid = labourPid(), d = S.ldate, id = d + "_" + wid + "_" + pid, ex = S.att.find(a => a.id===id);
+  if (!ex && !ot) return;
+  await run(() => store.saveAtt([attRecord(w, pid, d, ex ? ex.status : "P", ot, ex)]));
+}
+async function allPresent(){
+  const pid = labourPid(), d = S.ldate, have = new Set(S.att.filter(a => a.projectId===pid && a.date===d).map(a => a.workerId));
+  const items = siteWorkers(pid, d).filter(w => !have.has(w.id)).map(w => attRecord(w, pid, d, "P", 0));
+  if (items.length) await run(() => store.saveAtt(items), items.length + " marked present");
+}
+function kharchiForm(wid){
+  const w = worker(wid), pid = labourPid();
+  openSheet(`<div class="sh-head"><h3>Kharchi for ${esc(w.name)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <form class="f" id="kf">
+    <div class="fr"><label class="fl">Amount (₹)<input id="k-amt" class="amt-in" inputmode="decimal" required placeholder="0"></label><label class="fl">Date<input id="k-date" type="date" required value="${S.ldate || today()}"></label></div>
+    <label class="fl">Given by<select id="k-mode">${MODES.map(m => `<option ${m==="Cash"?"selected":""}>${m}</option>`).join("")}</select></label>
+    <label class="fl">Note<input id="k-note" placeholder="Optional"></label>
+    <p class="hint">This is deducted from ${esc(w.name)}'s wages on payday${advanceOut(wid, pid) ? `. Already given and not yet deducted: ${inr(advanceOut(wid, pid))}` : ""}.</p>
+    <div class="f-actions"><button class="btn primary" type="submit">Save kharchi</button></div>
+  </form>`);
+  $("#kf").addEventListener("submit", async ev => { ev.preventDefault();
+    const amt = n($("#k-amt").value); if (amt <= 0){ toast("Enter an amount above zero"); return; }
+    const note = $("#k-note").value.trim(), date = $("#k-date").value, mode = $("#k-mode").value;
+    closeSheet();
+    await run(() => store.saveTxn({id:uid(), created:Date.now(), kind:"pay", projectId:pid, party:payToOf(w), amount:amt, date, mode, note:"Kharchi" + (note ? " · " + note : ""), workerId:wid}), "Kharchi saved");
+  });
+}
+function payWagesForm(wid){
+  const pid = labourPid(), st = S.lweek, rows = weekSummary(pid, st).filter(r => r.remaining >= 1 && (!wid || r.wid===wid));
+  if (!rows.length) return;
+  const payDate = addDays(st, 7) <= today() ? addDays(st, 7) : today();
+  const tot = rows.reduce((x,r) => x + r.net, 0);
+  openSheet(`<div class="sh-head"><h3>Pay wages · ${weekLabel(st)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="detail"><dl>${rows.map(r => `<dt>${esc(r.name)}<br><span class="hint">${daysStr(r.days)} days${r.ot ? " + " + r.ot + " h OT" : ""}${r.deduct ? " · " + inr(r.deduct) + " kharchi deducted" : ""}</span></dt><dd class="num">${inr(r.net)}</dd>`).join("")}<dt><b>Total to pay</b></dt><dd class="num" style="font-size:18px">${inr(tot)}</dd></dl></div>
+  <form class="f" id="pwf"><div class="fr"><label class="fl">Paid on<input type="date" id="pw-date" value="${payDate}" required></label><label class="fl">Paid by<select id="pw-mode">${MODES.map(m => `<option ${m==="Cash"?"selected":""}>${m}</option>`).join("")}</select></label></div>
+  <div class="f-actions"><button class="btn primary" type="submit">Record payment of ${inr(tot)}</button></div></form>`);
+  $("#pwf").addEventListener("submit", async ev => { ev.preventDefault();
+    const date = $("#pw-date").value, mode = $("#pw-mode").value; closeSheet();
+    await run(async () => { for (const r of rows){ const w = worker(r.wid) || {name:r.name};
+      await store.saveTxn({id:uid(), created:Date.now(), kind:"exp", projectId:pid, category:"Labour", party:payToOf(w), amount:r.remaining, gst:0, billNo:"", paid:r.net, date, mode,
+        note:(r.paidGross ? "Wages correction " : "Wages ") + weekLabel(st) + " · " + w.name + " · " + daysStr(r.days) + " days" + (r.ot ? " + " + r.ot + " h OT" : "") + (r.deduct ? " · kharchi " + inr(r.deduct) + " deducted" : ""), workerId:r.wid, week:st}); } },
+      rows.length > 1 ? "Wages recorded for " + rows.length + " workers" : "Wages recorded");
+  });
+}
+function wageSheetText(){
+  const pid = labourPid(), st = S.lweek, rows = weekSummary(pid, st);
+  const lines = [`*Wages: ${proj(pid).name}*`, `Week ${weekLabel(st)}`, ""];
+  for (const r of rows) lines.push(`${r.name}: ${daysStr(r.days)} days${r.ot ? " + " + r.ot + "h OT" : ""} = ${inr(r.gross)}${r.deduct ? ` − kharchi ${inr(r.deduct)} = ${inr(r.net)}` : ""}${r.remaining < 1 ? " (paid)" : ""}`);
+  lines.push("", `Total wages: ${inr(rows.reduce((x,r)=>x+r.gross,0))}`);
+  return lines.join("\n");
+}
+
 /* ---------- sheets ---------- */
 function openSheet(html){ $("#layer").innerHTML = `<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`; const f = $("#layer input:not([type=hidden]):not([type=checkbox]):not([type=file]), #layer select"); }
 function closeSheet(){ $("#layer").innerHTML = ""; }
@@ -932,6 +1188,19 @@ document.addEventListener("click", async ev => {
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fb); else fb(); break; }
     case "ledger-csv": { const g = partyGroups().find(r => r.key===S.party); exportCSV([["Date","Project","Details","Bill","Paid","Balance"], ...ledgerRows(S.party, S.ledgerProj).map(r => [r.date, r.pname, r.details, r.bill||"", r.paid||"", r.bal])], "ledger-" + g.name.replace(/[^\w\- ]+/g,"").trim() + ".csv"); break; }
     case "party-rename": renameParty(); break;
+    case "go-dues": S.view="dues"; window.scrollTo(0,0); render(); break;
+    case "ltab": S.ltab=a.dataset.k; render(); break;
+    case "lday": { const d = addDays(S.ldate, n(a.dataset.k)); if (d <= today()){ S.ldate = d; render(); } break; }
+    case "lweek": S.lweek = addDays(S.lweek, n(a.dataset.k)); render(); break;
+    case "mark": markAtt(a.dataset.w, a.dataset.s); break;
+    case "all-present": allPresent(); break;
+    case "kharchi": kharchiForm(a.dataset.w); break;
+    case "worker-new": if (!activeProjects().length){ toast("Create a project first"); break; } workerForm(); break;
+    case "worker-edit": workerForm(worker(a.dataset.w)); break;
+    case "pay-wages": payWagesForm(a.dataset.w); break;
+    case "copy-wages": { const txt = wageSheetText(); const fb = () => { openSheet(`<div class="sh-head"><h3>Wage sheet</h3><button class="x" data-act="close" aria-label="Close">×</button></div><textarea id="stm" readonly style="width:100%;height:50vh;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:8px;font-size:13px">${esc(txt)}</textarea>`); const t=$("#stm"); t.focus(); t.select(); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => toast("Wage sheet copied. Paste it in WhatsApp."), fb); else fb(); break; }
+    case "lb-payday": { const w = wagesDue(addDays(weekStartOf(today()), -7)); S.view="labour"; S.ltab="week"; S.lweek=addDays(weekStartOf(today()), -7); if (w.pid) S.lpid = w.pid; window.scrollTo(0,0); render(); break; }
     case "settings": if (!CFG) break; S.view="settings"; window.scrollTo(0,0); render(); break;
     case "connect": S.view="connect"; render(); break;
     case "go-local": CFG = {mode:"local"}; LS.set("sk.cfg", CFG); queue = []; LS.set("sk.queue", queue); S.view="home"; render(); toast("Saving on this phone"); break;
@@ -960,13 +1229,18 @@ document.addEventListener("click", async ev => {
     case "csv-bills": exportCSV([txHead, ...S.txns.filter(t=>t.kind==="exp" && (S.billMonth==="all"||monthKey(t.date)===S.billMonth)).sort((x,y)=>(x.date||"").localeCompare(y.date||"")).map(txCSV)], "bills-" + (S.billMonth==="all"?"all":S.billMonth) + ".csv"); break;
   }
 });
-document.addEventListener("change", ev => { if (ev.target.id==="bm"){ S.billMonth = ev.target.value; render(); } if (ev.target.id==="restore" && ev.target.files[0]) restoreBackup(ev.target.files[0]); });
+document.addEventListener("change", ev => { if (ev.target.id==="bm"){ S.billMonth = ev.target.value; render(); }
+  if (ev.target.id==="lb-proj"){ S.lpid = ev.target.value; render(); }
+  if (ev.target.id==="lb-date" && ev.target.value){ S.ldate = ev.target.value > today() ? today() : ev.target.value; render(); }
+  if (ev.target.id==="lb-add" && ev.target.value){ const w = worker(ev.target.value); markAtt(w.id, "P"); }
+  if (ev.target.dataset && ev.target.dataset.ot !== undefined){ setOT(ev.target.dataset.ot, n(ev.target.value)); }
+  if (ev.target.id==="payday"){ LS.set("sk.payday", +ev.target.value); S.lweek = null; toast("Payday set to " + WEEKDAYS[+ev.target.value]); render(); } if (ev.target.id==="restore" && ev.target.files[0]) restoreBackup(ev.target.files[0]); });
 document.addEventListener("keydown", ev => { if (ev.key==="Enter" && ev.target.matches && ev.target.matches("tr[data-act=tx]")) ev.target.click(); if (ev.key==="Escape" && $("#layer").innerHTML) closeSheet(); });
 
 /* ---------- boot ---------- */
 function boot(){
   const c = LS.get("sk.data", null);
-  if (c){ S.projects = c.projects || []; S.txns = c.txns || []; }
+  if (c){ S.projects = c.projects || []; S.txns = c.txns || []; S.workers = c.workers || []; S.att = c.att || []; }
   if (!CFG) S.view = "connect";
   render();
   if (CFG && CFG.mode==="sheet") pull();

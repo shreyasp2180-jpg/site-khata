@@ -15,6 +15,8 @@
 
 const PIN = 'CHANGE-ME';
 
+const SCRIPT_VERSION = 3; // the app checks this to know when the script needs updating
+
 const PROJECT_COLS = [
   ['id', 'ID'], ['name', 'Project'], ['client', 'Client'], ['site', 'Site'], ['type', 'Work type'],
   ['contract', 'Contract value'], ['status', 'Status'], ['start', 'Start date'], ['created', 'Created'], ['sample', 'Example']
@@ -23,10 +25,21 @@ const ENTRY_COLS = [
   ['id', 'ID'], ['projectId', 'Project ID'], ['project', 'Project'], ['kind', 'Type'], ['date', 'Date'],
   ['category', 'Category'], ['party', 'Party'], ['amount', 'Amount'], ['gst', 'GST'], ['paid', 'Paid with bill'],
   ['unpaid', 'Unpaid'], ['billNo', 'Bill no.'], ['mode', 'Mode'], ['note', 'Note'],
-  ['receiptUrl', 'Receipt photo'], ['receiptId', 'Receipt file ID'], ['created', 'Created'], ['sample', 'Example']
+  ['receiptUrl', 'Receipt photo'], ['receiptId', 'Receipt file ID'], ['created', 'Created'], ['sample', 'Example'],
+  ['workerId', 'Worker ID'], ['week', 'Wage week from']
 ];
-const NUMBERS = { contract: 1, amount: 1, gst: 1, paid: 1, unpaid: 1, created: 1 };
-const DATES = { start: 1, date: 1 };
+const WORKER_COLS = [
+  ['id', 'ID'], ['name', 'Name'], ['role', 'Work'], ['rate', 'Daily rate'], ['otRate', 'OT rate per hour'],
+  ['projectId', 'Project ID'], ['project', 'Site'], ['payTo', 'Paid through'], ['active', 'Working'], ['created', 'Created']
+];
+const ATT_COLS = [
+  ['id', 'ID'], ['date', 'Date'], ['projectId', 'Project ID'], ['project', 'Project'], ['workerId', 'Worker ID'],
+  ['worker', 'Worker'], ['status', 'Attendance'], ['ot', 'OT hours'], ['wage', 'Wage'], ['created', 'Created']
+];
+const STATUS_LABEL = { P: 'Present', H: 'Half day', A: 'Absent' };
+const STATUS_KEY = { 'Present': 'P', 'Half day': 'H', 'Absent': 'A' };
+const NUMBERS = { contract: 1, amount: 1, gst: 1, paid: 1, unpaid: 1, created: 1, rate: 1, otRate: 1, ot: 1, wage: 1 };
+const DATES = { start: 1, date: 1, week: 1 };
 const KIND_LABEL = { in: 'Money in', exp: 'Expense', pay: 'Vendor payment' };
 const KIND_KEY = { 'Money in': 'in', 'Expense': 'exp', 'Vendor payment': 'pay' };
 const FOLDER = 'Site Khata receipts';
@@ -35,6 +48,8 @@ const FOLDER = 'Site Khata receipts';
 function setup() {
   sheet_('Projects', PROJECT_COLS);
   sheet_('Entries', ENTRY_COLS);
+  sheet_('Workers', WORKER_COLS);
+  sheet_('Attendance', ATT_COLS);
   folder_();
   if (PIN === 'CHANGE-ME') throw new Error('Set your own PIN at the top of the script, save, and run setup again.');
   Logger.log('Site Khata is ready. Now deploy it as a Web app.');
@@ -64,9 +79,12 @@ function doPost(e) {
 function handle_(req) {
   switch (req.action) {
     case 'ping':
-      return { app: 'Site Khata' };
+      return { app: 'Site Khata', version: SCRIPT_VERSION };
     case 'load':
       return {
+        version: SCRIPT_VERSION,
+        workers: read_('Workers', WORKER_COLS),
+        attendance: read_('Attendance', ATT_COLS).map(function (a) { a.status = STATUS_KEY[a.status] || a.status; return a; }),
         projects: read_('Projects', PROJECT_COLS),
         txns: read_('Entries', ENTRY_COLS).map(function (t) { t.kind = KIND_KEY[t.kind] || t.kind; t.receipt = !!t.receiptId; return t; })
       };
@@ -117,6 +135,21 @@ function handle_(req) {
       if (old) reallocate_(old.projectId, old.party);
       return {};
     }
+    case 'saveWorker': {
+      const w = Object.assign({}, req.worker);
+      const p = find_('Projects', PROJECT_COLS, w.projectId);
+      w.project = p ? p.name : '';
+      upsert_('Workers', WORKER_COLS, w);
+      return {};
+    }
+    case 'saveAtt': {
+      (req.items || []).forEach(function (a) { upsert_('Attendance', ATT_COLS, Object.assign({}, a, { status: STATUS_LABEL[a.status] || a.status })); });
+      return {};
+    }
+    case 'deleteAtt': {
+      (req.ids || []).forEach(function (id) { remove_('Attendance', ATT_COLS, id); });
+      return {};
+    }
     case 'getReceipt': {
       const f = DriveApp.getFileById(req.receiptId);
       const b = f.getBlob();
@@ -162,7 +195,13 @@ function sheet_(name, cols) {
     sh.getRange(1, 1, 1, cols.length).setValues([cols.map(function (c) { return c[1]; })]).setFontWeight('bold');
     sh.setFrozenRows(1);
     sh.hideColumns(1);
-    if (name === 'Entries') { sh.hideColumns(2); sh.hideColumns(16); }
+    if (name === 'Entries') { sh.hideColumns(2); sh.hideColumns(16); sh.hideColumns(19); }
+    if (name === 'Workers') sh.hideColumns(6);
+    if (name === 'Attendance') { sh.hideColumns(3); sh.hideColumns(5); }
+  } else {
+    // add headers for columns added in newer versions of this script
+    const head = sh.getRange(1, 1, 1, cols.length).getValues()[0];
+    cols.forEach(function (c, i) { if (head[i] === '' || head[i] === undefined) sh.getRange(1, i + 1).setValue(c[1]).setFontWeight('bold'); });
   }
   return sh;
 }
@@ -182,6 +221,7 @@ function toObj_(row, cols) {
     if (v instanceof Date) v = Utilities.formatDate(v, tz_(), 'yyyy-MM-dd');
     if (NUMBERS[c[0]]) v = v === '' ? 0 : Number(v);
     if (c[0] === 'sample') v = v === true || v === 'TRUE' || v === 'Yes';
+    if (c[0] === 'active') v = !(v === false || v === 'FALSE' || v === 'No');
     o[c[0]] = v;
   });
   return o;
@@ -190,6 +230,7 @@ function toRow_(o, cols) {
   return cols.map(function (c) {
     const v = o[c[0]];
     if (c[0] === 'sample') return v ? 'Yes' : '';
+    if (c[0] === 'active') return v === false ? 'No' : 'Yes';
     if (v === undefined || v === null) return '';
     if (DATES[c[0]] && v) return new Date(String(v) + 'T00:00:00');
     return v;
