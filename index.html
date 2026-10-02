@@ -17,6 +17,7 @@
 :root{
   --bg:#eceff0; --surface:#ffffff; --surface-2:#f4f6f7; --line:#d5dbde; --ink:#15202b; --muted:#5e6b76;
   --accent:#1d4ed8; --accent-ink:#ffffff; --accent-soft:#e3eaff;
+  --c-in:#2563eb; --c-out:#c2410c;
   --in:#0f7a4a; --in-soft:#dff3e8; --out:#b4361f; --out-soft:#fbe5df; --due:#9a5b00; --due-soft:#fdf0d6;
   --shadow:0 1px 2px rgba(21,32,43,.06),0 4px 14px rgba(21,32,43,.06);
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
@@ -27,11 +28,13 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#101417; --surface:#182026; --surface-2:#1e272e; --line:#2c3740; --ink:#e7ecef; --muted:#93a1ab;
   --accent:#7aa2ff; --accent-ink:#0b1430; --accent-soft:#1d2a4d;
+  --c-in:#5b8def; --c-out:#d4692c;
   --in:#4cc78b; --in-soft:#143326; --out:#f08a72; --out-soft:#3a1d17; --due:#f0b65a; --due-soft:#3a2b10;
   --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#101417; --surface:#182026; --surface-2:#1e272e; --line:#2c3740; --ink:#e7ecef; --muted:#93a1ab;
   --accent:#7aa2ff; --accent-ink:#0b1430; --accent-soft:#1d2a4d;
+  --c-in:#5b8def; --c-out:#d4692c;
   --in:#4cc78b; --in-soft:#143326; --out:#f08a72; --out-soft:#3a1d17; --due:#f0b65a; --due-soft:#3a2b10;
   --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}
 *{box-sizing:border-box}
@@ -53,6 +56,28 @@ body.setup{padding-bottom:24px}
 .steps ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .steps a{color:var(--accent)}
 .banner .btn{margin-left:6px;vertical-align:middle}
+.ctable{width:100%;border-collapse:collapse;font-size:13.5px}
+.ctable th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;text-align:left;padding:9px 10px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.ctable td{padding:9px 10px;border-top:1px solid var(--line);white-space:nowrap}
+.ctable .r{text-align:right}
+.ctable .b{font-weight:700}
+@media (max-width:430px){.ctable th,.ctable td{padding:8px 6px;font-size:12.5px}}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.filters .fl select,.filters .fl input{padding:8px 10px;font-size:14.5px}
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 6px}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.legend span,.tip span{display:inline-flex;align-items:center;gap:6px}
+.sw-in,.sw-out{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c-in)}
+.sw-out{background:var(--c-out)}
+.chart-scroll{overflow-x:auto;position:relative}
+.chart svg{display:block}
+.chart .b-in{fill:var(--c-in)} .chart .b-out{fill:var(--c-out)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .ax{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .hit.on{fill:var(--ink);fill-opacity:.05}
+.tip{position:absolute;top:6px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:8px;padding:8px 10px;font-size:12.5px;display:flex;flex-direction:column;gap:3px;pointer-events:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+@media (max-width:430px){header.top .pill{display:none}}
 .payday{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--due-soft);color:var(--due)}
 .payday div{flex:1;min-width:0;display:flex;flex-direction:column}
 .payday span{font-size:13px}
@@ -115,6 +140,10 @@ body.setup{padding-bottom:24px}
   .ltable tfoot td{border:0}
   .ltable tfoot tr{background:var(--surface-2);border-top:2px solid var(--line)}
   .ltable tfoot td:first-child{grid-column:1/3;grid-row:1/4;align-self:center}
+  .rtable tr{grid-template-columns:minmax(0,1fr) auto}
+  .rtable td:first-child{grid-column:1;grid-row:1/6;align-self:start}
+  .rtable td.r{grid-column:2}
+  .rtable tfoot td:first-child{grid-column:1;grid-row:1/6}
 }
 
 html{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
@@ -285,7 +314,7 @@ label.fl{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight
   <button class="nb" data-nav="home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-7h6v7"/></svg>Projects</button>
   <button class="nb" data-nav="labour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15a8 8 0 0 1 16 0"/><path d="M12 7v4M9 8.5 10 12M15 8.5 14 12"/><path d="M2.5 15h19v2.5h-19z"/><path d="M8 21h8"/></svg>Labour</button>
   <button class="fab" id="fab" aria-label="Add entry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button class="nb" data-nav="bills"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Bills</button>
+  <button class="nb" data-nav="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V4"/><path d="M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-7"/></svg>Reports</button>
   <button class="nb" data-nav="parties"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.8 3 2.6 3.5 5.2"/></svg>Parties</button>
 </div></nav>
 <div id="layer"></div>
@@ -304,7 +333,7 @@ const NEED_SCRIPT = 3; // Sheet script version that stores workers & attendance
 const $ = (s, r=document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const n = v => { const x = parseFloat(v); return isFinite(x) ? x : 0; };
-const inr = v => "₹" + Math.round(v).toLocaleString("en-IN");
+const inr = v => (Math.round(v) < 0 ? "−₹" : "₹") + Math.abs(Math.round(v)).toLocaleString("en-IN");
 const short = v => { const a = Math.abs(v), s = v < 0 ? "−" : "";
   if (a >= 1e7) return s + "₹" + (a/1e7).toFixed(a >= 1e8 ? 1 : 2).replace(/\.?0+$/,"") + " Cr";
   if (a >= 1e5) return s + "₹" + (a/1e5).toFixed(2).replace(/\.?0+$/,"") + " L";
@@ -643,15 +672,15 @@ async function clearExamples(){
 /* ---------- render ---------- */
 function render(){
   document.body.classList.toggle("setup", S.view==="connect");
-  document.querySelectorAll(".nb").forEach(b => b.toggleAttribute("aria-current", b.dataset.nav === (S.view==="project" || S.view==="dues" ? "home" : S.view==="ledger" ? "parties" : S.view)));
+  document.querySelectorAll(".nb").forEach(b => b.toggleAttribute("aria-current", b.dataset.nav === (S.view==="project" || S.view==="dues" ? "home" : S.view==="ledger" ? "parties" : S.view==="bills" ? "reports" : S.view)));
   document.querySelectorAll(".nb[aria-current]").forEach(b=>b.setAttribute("aria-current","page"));
   if (S.view==="project" && !proj(S.pid)) S.view="home";
-  ({home:renderHome, project:renderProject, dues:renderDues, bills:renderBills, parties:renderParties, ledger:renderLedger, labour:renderLabour, connect:renderConnect, settings:renderSettings})[S.view]();
+  ({home:renderHome, project:renderProject, dues:renderDues, bills:renderBills, reports:renderReports, search:renderSearch, parties:renderParties, ledger:renderLedger, labour:renderLabour, connect:renderConnect, settings:renderSettings})[S.view]();
   paintPill(); nudge();
 }
 function header(title, sub, back, right=""){
   $("#hdr").innerHTML = (back ? `<button class="back" data-act="back" aria-label="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>` : "")
-    + `<div class="brand">${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</div><div class="spacer"></div>${right}<button class="pill" id="pill" data-act="settings" hidden></button>${CFG ? `<button class="back" data-act="settings" aria-label="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>` : ""}`;
+    + `<div class="brand">${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</div><div class="spacer"></div>${right}${CFG && S.view!=="search" ? `<button class="back" data-act="search" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>` : ""}<button class="pill" id="pill" data-act="settings" hidden></button>${CFG ? `<button class="back" data-act="settings" aria-label="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>` : ""}`;
 }
 function cell(k, v, cls="", s=""){ return `<div class="cell"><div class="k">${k}</div><div class="v num ${cls}">${v}</div>${s?`<div class="s">${s}</div>`:""}</div>`; }
 
@@ -1064,6 +1093,166 @@ function wageSheetText(){
   return lines.join("\n");
 }
 
+/* ---------- reports ---------- */
+const PERIODS = [["month","This month"],["lastmonth","Last month"],["fy","This financial year"],["lastfy","Last financial year"],["all","All time"],["custom","Custom dates"]];
+function periodRange(){
+  const R = S.rp, t = today(), y = +t.slice(0,4), m = +t.slice(5,7);
+  const pad = v => String(v).padStart(2,"0"), last = (yy, mm) => isoOf(new Date(yy, mm, 0));
+  const fyStart = m >= 4 ? y : y - 1;
+  switch (R.period){
+    case "month": return [`${y}-${pad(m)}-01`, t];
+    case "lastmonth": { const ly = m===1 ? y-1 : y, lm = m===1 ? 12 : m-1; return [`${ly}-${pad(lm)}-01`, last(ly, lm)]; }
+    case "fy": return [`${fyStart}-04-01`, `${fyStart+1}-03-31`];
+    case "lastfy": return [`${fyStart-1}-04-01`, `${fyStart}-03-31`];
+    case "custom": return [R.from || `${fyStart}-04-01`, R.to || t];
+    default: { const ds = S.txns.map(x => x.date).filter(Boolean).sort(); return [ds[0] || t, t]; }
+  }
+}
+function rangeLabel(a, b){ return S.rp.period==="all" ? "All time" : fmtDate(a) + " – " + fmtDate(b); }
+function inRange(t, a, b){ return (t.date||"") >= a && (t.date||"") <= b && (!S.rp.pid || t.projectId===S.rp.pid); }
+function monthsBetween(a, b){ const out = []; let y = +a.slice(0,4), m = +a.slice(5,7); const ey = +b.slice(0,4), em = +b.slice(5,7); while (y < ey || (y===ey && m <= em)){ out.push(`${y}-${String(m).padStart(2,"0")}`); m++; if (m>12){ m=1; y++; } if (out.length > 60) break; } return out; }
+const outflow = t => t.kind==="exp" ? n(t.paid) : t.kind==="pay" ? n(t.amount) : 0;
+
+function renderReports(){
+  S.rp = S.rp || {period:"fy", pid:"", tab:"summary"};
+  const [a, b] = periodRange();
+  header("Reports", rangeLabel(a, b), false, `<button class="btn small" data-act="rp-csv">Export CSV</button>`);
+  let h = `<div class="filters">
+    <label class="fl" for="rp-period">Period<select id="rp-period">${PERIODS.map(([k,l]) => `<option value="${k}" ${S.rp.period===k?"selected":""}>${l}</option>`).join("")}</select></label>
+    <label class="fl" for="rp-proj">Project<select id="rp-proj"><option value="">All projects</option>${S.projects.map(p => `<option value="${p.id}" ${S.rp.pid===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select></label>
+    ${S.rp.period==="custom" ? `<label class="fl" for="rp-from">From<input type="date" id="rp-from" value="${a}"></label><label class="fl" for="rp-to">To<input type="date" id="rp-to" value="${b}"></label>` : ""}
+  </div>
+  <div class="tabs" role="group" aria-label="Report">${[["summary","Summary"],["projects","Projects"],["spending","Spending"],["gst","GST & bills"],["labour","Labour"]].map(([k,l]) => `<button class="tab" data-act="rp-tab" data-k="${k}" aria-pressed="${S.rp.tab===k}">${l}</button>`).join("")}</div>`;
+  const tx = S.txns.filter(t => inRange(t, a, b));
+  if (S.rp.tab==="summary") h += rpSummary(tx, a, b);
+  else if (S.rp.tab==="projects") h += rpProjects(tx);
+  else if (S.rp.tab==="spending") h += rpSpending(tx);
+  else if (S.rp.tab==="gst") h += rpGst(tx);
+  else h += rpLabour(tx, a, b);
+  $("#main").innerHTML = h;
+}
+function rpMonthly(tx, a, b){
+  const ms = monthsBetween(a, b > today() ? today() : b);
+  const rows = ms.map(m => { const xs = tx.filter(t => monthKey(t.date)===m); const inn = xs.filter(t => t.kind==="in").reduce((x,t)=>x+n(t.amount),0), out = xs.reduce((x,t)=>x+outflow(t),0); return {m, inn, out, net: inn - out}; });
+  while (rows.length > 1 && !rows[0].inn && !rows[0].out) rows.shift(); // start at the first month with money moving
+  return rows;
+}
+function rpSummary(tx, a, b){
+  const rec = tx.filter(t => t.kind==="in").reduce((x,t)=>x+n(t.amount),0);
+  const bills = tx.filter(t => t.kind==="exp"), billed = bills.reduce((x,t)=>x+n(t.amount),0), gst = bills.reduce((x,t)=>x+n(t.gst),0);
+  const paidOut = tx.reduce((x,t)=>x+outflow(t),0), labour = bills.filter(t => t.category==="Labour").reduce((x,t)=>x+n(t.amount),0);
+  const rows = rpMonthly(tx, a, b);
+  if (!tx.length) return `<div class="list"><div class="none">No entries in this period${S.rp.pid ? " for this project" : ""}.</div></div>`;
+  return `<div class="strip">${cell("Money received", short(rec), "in")}${cell("Bills (spent)", short(billed), "out")}${cell("Paid out", short(paidOut), "")}${cell("Net cash", short(rec - paidOut), rec - paidOut < 0 ? "out" : "in", "received − paid out")}</div>
+    <div class="strip">${cell("GST in bills", short(gst), "", "input tax")}${cell("Labour", short(labour), "", billed ? Math.round(labour/billed*100) + "% of bills" : "")}${cell("Entries", tx.length)}${cell("Months", rows.length)}</div>
+    <h2 class="sec">Money in and out by month</h2>${chartInOut(rows)}
+    <div class="ledger-wrap"><table class="ctable num"><thead><tr><th>Month</th><th class="r">In</th><th class="r">Out</th><th class="r">Net</th></tr></thead><tbody>${rows.map(r => `<tr><td>${new Date(r.m + "-01T00:00:00").toLocaleDateString("en-IN", {month:"short", year:"numeric"})}</td><td class="r" data-l="In">${inr(r.inn)}</td><td class="r" data-l="Out">${inr(r.out)}</td><td class="r b" data-l="Net" style="color:${r.net<0?"var(--out)":"var(--in)"}">${inr(r.net)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function niceMax(v){ if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+function chartInOut(rows){
+  const W = Math.max(340, rows.length * 58 + 56), H = 210, L = 48, B = 26, T = 10, ph = H - B - T;
+  const max = niceMax(Math.max(1, ...rows.map(r => Math.max(r.inn, r.out))));
+  const y = v => T + ph - v / max * ph, col = (W - L - 8) / rows.length, bw = Math.min(22, (col - 14) / 2);
+  const bar = (x, v, cls) => { if (v <= 0) return ""; const top = y(v), h = T + ph - top, r = Math.min(4, h); return `<path class="${cls}" d="M${x},${T+ph} V${top+r} Q${x},${top} ${x+r},${top} H${x+bw-r} Q${x+bw},${top} ${x+bw},${top+r} V${T+ph} Z"/>`; };
+  let g = "";
+  for (let i = 0; i <= 4; i++){ const v = max * i / 4, yy = y(v); g += `<line x1="${L}" x2="${W-8}" y1="${yy}" y2="${yy}" class="grid"/><text x="${L-6}" y="${yy+4}" class="ax" text-anchor="end">${v ? short(v).replace("₹","") : "0"}</text>`; }
+  rows.forEach((r, i) => {
+    const cx = L + col * i + col / 2;
+    g += bar(cx - bw - 1, r.inn, "b-in") + bar(cx + 1, r.out, "b-out");
+    g += `<text x="${cx}" y="${H - 8}" class="ax" text-anchor="middle">${new Date(r.m + "-01T00:00:00").toLocaleDateString("en-IN", {month:"short"})}${rows.length > 12 || r.m.slice(5)==="01" ? " " + r.m.slice(2,4) : ""}</text>`;
+    g += `<rect class="hit" x="${L + col*i}" y="${T}" width="${col}" height="${ph}" data-tip="${esc(monthLabel(r.m))}|${inr(r.inn)}|${inr(r.out)}|${inr(r.net)}" data-x="${cx}"/>`;
+  });
+  return `<div class="chart"><div class="legend"><span><i class="sw-in"></i>Money in</span><span><i class="sw-out"></i>Money out</span></div>
+    <div class="chart-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Money in and out by month">${g}</svg><div class="tip" hidden></div></div></div>`;
+}
+function rpProjects(tx){
+  const ids = S.rp.pid ? [S.rp.pid] : S.projects.map(p => p.id);
+  const rows = ids.map(id => { const p = proj(id), xs = tx.filter(t => t.projectId===id);
+    const rec = xs.filter(t => t.kind==="in").reduce((x,t)=>x+n(t.amount),0), billed = xs.filter(t => t.kind==="exp").reduce((x,t)=>x+n(t.amount),0);
+    const all = stats(id); return {p, rec, billed, contract: n(p.contract), margin: all.margin, pct: all.contract ? Math.round(all.margin / all.contract * 100) : null, cash: rec - xs.reduce((x,t)=>x+outflow(t),0)}; })
+    .filter(r => r.rec || r.billed || !S.rp.pid).sort((a,b) => b.billed - a.billed);
+  const T = rows.reduce((x,r) => ({rec:x.rec+r.rec, billed:x.billed+r.billed, cash:x.cash+r.cash}), {rec:0, billed:0, cash:0});
+  return `<p class="hint" style="margin:0">Received, bills and cash are for the selected period. Margin is for the whole project so far (contract value − all bills).</p>
+  <div class="ledger-wrap"><table class="ltable num rtable"><thead><tr><th>Project</th><th class="r">Received</th><th class="r">Bills</th><th class="r">Net cash</th><th class="r">Margin so far</th></tr></thead><tbody>${rows.map(r => `<tr data-act="open" data-id="${r.p.id}" tabindex="0"><td class="det">${esc(r.p.name)}<span>${STATUS[r.p.status]||""} · contract ${short(r.contract)}</span></td><td class="r" data-l="Received">${inr(r.rec)}</td><td class="r" data-l="Bills">${inr(r.billed)}</td><td class="r" data-l="Net cash" style="color:${r.cash<0?"var(--out)":"var(--in)"}">${inr(r.cash)}</td><td class="r b" data-l="Margin" style="color:${r.margin<0?"var(--out)":"var(--in)"}">${inr(r.margin)}${r.pct!==null ? ` <span class="muted" style="font-weight:500">${r.pct}%</span>` : ""}</td></tr>`).join("")}</tbody>
+  <tfoot><tr><td>Total</td><td class="r" data-l="Received">${inr(T.rec)}</td><td class="r" data-l="Bills">${inr(T.billed)}</td><td class="r" data-l="Net cash">${inr(T.cash)}</td><td class="r"></td></tr></tfoot></table></div>`;
+}
+function rpSpending(tx){
+  const bills = tx.filter(t => t.kind==="exp"), tot = bills.reduce((x,t)=>x+n(t.amount),0);
+  if (!bills.length) return `<div class="list"><div class="none">No bills in this period.</div></div>`;
+  const cats = {}; for (const t of bills) cats[t.category||"Other"] = (cats[t.category||"Other"]||0) + n(t.amount);
+  const cl = Object.entries(cats).sort((a,b)=>b[1]-a[1]), max = cl[0][1];
+  const ven = new Map(); for (const t of bills){ if (!norm(t.party)) continue; const r = ven.get(norm(t.party)) || {name:t.party.trim(), amt:0, cnt:0}; r.amt += n(t.amount); r.cnt++; ven.set(norm(t.party), r); }
+  const vl = [...ven.values()].sort((a,b)=>b.amt-a.amt).slice(0, 10);
+  return `<h2 class="sec">By category · ${inr(tot)}</h2><div class="catbars">${cl.map(([c,v]) => `<div class="cb"><span class="n">${esc(c)}</span><span class="t"><i style="width:${v/max*100}%"></i></span><span class="a num">${short(v)} <span class="muted">${Math.round(v/tot*100)}%</span></span></div>`).join("")}</div>
+    <h2 class="sec">Top vendors</h2><div class="list">${vl.map((r,i) => `<button class="tx" data-act="ledger" data-k="${esc(norm(r.name))}" style="grid-template-columns:1.6rem minmax(0,1fr) auto"><span class="muted num">${i+1}</span><span style="min-width:0"><span class="t1" style="display:block">${esc(r.name)}</span><span class="t2" style="display:block">${r.cnt} bill${r.cnt>1?"s":""}</span></span><span class="amt num">${inr(r.amt)}<small class="muted">${Math.round(r.amt/tot*100)}% of spend</small></span></button>`).join("") || `<div class="none">Bills in this period have no vendor names.</div>`}</div>`;
+}
+function rpGst(tx){
+  const bills = tx.filter(t => t.kind==="exp");
+  const tot = bills.reduce((a,t)=>a+n(t.amount),0), gst = bills.reduce((a,t)=>a+n(t.gst),0), withR = bills.filter(t=>t.receipt).length, noBill = bills.filter(t=>!t.billNo).length;
+  const ms = [...new Set(bills.map(t => monthKey(t.date)))].sort();
+  let h = `<div class="strip">${cell("Bills", bills.length)}${cell("Bill value", short(tot), "out")}${cell("GST in bills", short(gst), "", "input tax to claim")}${cell("Receipt photos", withR + "/" + bills.length, "", noBill ? noBill + " without bill no." : "")}</div>`;
+  if (!bills.length) return h + `<div class="list"><div class="none">No bills in this period.</div></div>`;
+  h += `<h2 class="sec">GST by month</h2><div class="ledger-wrap"><table class="ltable num rtable"><thead><tr><th>Month</th><th class="r">Bills</th><th class="r">Taxable value</th><th class="r">GST</th><th class="r">Bill total</th></tr></thead><tbody>${ms.map(m => { const xs = bills.filter(t => monthKey(t.date)===m), tt = xs.reduce((a,t)=>a+n(t.amount),0), g = xs.reduce((a,t)=>a+n(t.gst),0);
+    return `<tr><td>${monthLabel(m)}</td><td class="r" data-l="Bills">${xs.length}</td><td class="r" data-l="Taxable">${inr(tt-g)}</td><td class="r b" data-l="GST">${inr(g)}</td><td class="r" data-l="Total">${inr(tt)}</td></tr>`; }).join("")}</tbody>
+    <tfoot><tr><td>Total</td><td class="r" data-l="Bills">${bills.length}</td><td class="r" data-l="Taxable">${inr(tot-gst)}</td><td class="r b" data-l="GST">${inr(gst)}</td><td class="r" data-l="Total">${inr(tot)}</td></tr></tfoot></table></div>
+    <h2 class="sec">All bills</h2>`;
+  return h + txList(bills, true);
+}
+function rpLabour(tx, a, b){
+  const att = S.att.filter(x => x.date >= a && x.date <= b && (!S.rp.pid || x.projectId===S.rp.pid));
+  const m = new Map();
+  for (const x of att){ const r = m.get(x.workerId) || {name:(worker(x.workerId)||{}).name || x.worker, days:0, ot:0, wages:0, paid:0, kharchi:0}; r.days += FACTOR[x.status]||0; r.ot += n(x.ot); r.wages += n(x.wage); m.set(x.workerId, r); }
+  for (const t of tx){ if (!t.workerId) continue; const r = m.get(t.workerId) || {name:(worker(t.workerId)||{}).name || t.party, days:0, ot:0, wages:0, paid:0, kharchi:0}; if (t.kind==="pay") r.kharchi += n(t.amount); else if (t.kind==="exp") r.paid += n(t.paid); m.set(t.workerId, r); }
+  const rows = [...m.values()].sort((x,y) => y.wages - x.wages);
+  if (!rows.length) return `<div class="list"><div class="none">No attendance or wage payments in this period.</div></div>`;
+  const T = rows.reduce((x,r) => ({days:x.days+r.days, wages:x.wages+r.wages, paid:x.paid+r.paid+r.kharchi}), {days:0, wages:0, paid:0});
+  return `<div class="strip" style="grid-template-columns:repeat(3,minmax(0,1fr))">${cell("Workdays", daysStr(T.days))}${cell("Wages earned", short(T.wages))}${cell("Paid incl. kharchi", short(T.paid), "")}</div>
+  <div class="ledger-wrap"><table class="ltable num rtable"><thead><tr><th>Worker</th><th class="r">Days</th><th class="r">Earned</th><th class="r">Kharchi</th><th class="r">Wages paid</th></tr></thead><tbody>${rows.map(r => `<tr><td class="det">${esc(r.name)}${r.ot ? `<span>${r.ot} h OT</span>` : ""}</td><td class="r" data-l="Days">${daysStr(r.days)}</td><td class="r b" data-l="Earned">${inr(r.wages)}</td><td class="r" data-l="Kharchi">${inr(r.kharchi)}</td><td class="r" data-l="Paid">${inr(r.paid)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function reportCSV(){
+  const [a, b] = periodRange(), tx = S.txns.filter(t => inRange(t, a, b)), tag = (S.rp.tab) + "-" + a + "-to-" + b + ".csv";
+  if (S.rp.tab==="summary") return exportCSV([["Month","Money in","Money out","Net"], ...rpMonthly(tx, a, b).map(r => [monthLabel(r.m), r.inn, r.out, r.net])], "summary-" + tag);
+  if (S.rp.tab==="gst"){ const bills = tx.filter(t => t.kind==="exp").sort((x,y)=>(x.date||"").localeCompare(y.date||""));
+    return exportCSV([["Date","Project","Vendor","Bill no.","Category","Taxable value","GST","Bill total","Receipt photo"], ...bills.map(t => [t.date, (proj(t.projectId)||{}).name||"", t.party||"", t.billNo||"", t.category||"", n(t.amount)-n(t.gst), n(t.gst), n(t.amount), t.receiptUrl || (t.receipt ? "on phone" : "")])], "gst-bills-" + tag); }
+  return exportCSV([txHead, ...tx.sort((x,y)=>(x.date||"").localeCompare(y.date||"")).map(txCSV)], "entries-" + tag);
+}
+
+/* ---------- global search ---------- */
+function searchHits(q){
+  q = norm(q); if (!q) return {tx:[], projects:[], parties:[]};
+  const num = q.replace(/[₹,\s]/g, ""), isNum = /^\d+(\.\d+)?$/.test(num);
+  const tx = S.txns.filter(t => {
+    if (S.sk && S.sk!=="all" && t.kind!==S.sk) return false;
+    if (isNum && (String(Math.round(n(t.amount))).includes(num) || (t.billNo||"").toLowerCase().includes(q))) return true;
+    const p = proj(t.projectId);
+    return [t.party, t.note, t.billNo, t.category, t.mode, p && p.name, fmtDate(t.date)].some(v => norm(v).includes(q));
+  });
+  const projects = S.projects.filter(p => [p.name, p.client, p.site].some(v => norm(v).includes(q)));
+  const parties = partyGroups().filter(r => r.key.includes(q)).slice(0, 6);
+  return {tx, projects, parties};
+}
+function renderSearch(){
+  header("Search", "Entries, projects and parties", true);
+  $("#main").innerHTML = `<label class="fl" for="sq" style="margin:0">Search<input id="sq" type="search" value="${esc(S.sq||"")}" placeholder="Vendor, note, bill no., amount…" autocomplete="off"></label>
+    <div class="tabs" role="group" aria-label="Entry type">${[["all","All"],["in","Money in"],["exp","Expenses"],["pay","Payments"]].map(([k,l]) => `<button class="tab" data-act="sk" data-k="${k}" aria-pressed="${(S.sk||"all")===k}">${l}</button>`).join("")}</div>
+    <div id="sres"></div>`;
+  paintSearch();
+  const i = $("#sq"); i.addEventListener("input", () => { S.sq = i.value; paintSearch(); });
+  if (!S.sq) setTimeout(() => i.focus(), 50);
+}
+function paintSearch(){
+  const el = $("#sres"); if (!el) return;
+  if (!norm(S.sq)){ el.innerHTML = `<p class="hint">Type a vendor or labour name, a word from a note, a bill number, a category like "steel", or an amount like 25000.</p>`; return; }
+  const r = searchHits(S.sq), shown = r.tx.slice(0, 200);
+  const sum = k => r.tx.filter(t => t.kind===k).reduce((x,t)=>x+n(t.amount),0);
+  let h = "";
+  if (r.projects.length) h += `<h2 class="sec">Projects</h2><div class="list">${r.projects.map(p => `<button class="tx" data-act="open" data-id="${p.id}" style="grid-template-columns:minmax(0,1fr) auto"><span style="min-width:0"><span class="t1" style="display:block">${esc(p.name)}</span><span class="t2" style="display:block">${esc([p.client, p.site].filter(Boolean).join(" · "))}</span></span><span class="chip ${p.status}">${STATUS[p.status]}</span></button>`).join("")}</div>`;
+  if (r.parties.length) h += `<h2 class="sec">Party ledgers</h2><div class="list">${r.parties.map(g => `<button class="tx" data-act="ledger" data-k="${esc(g.key)}" style="grid-template-columns:minmax(0,1fr) auto"><span class="t1">${esc(g.name)}</span><span class="amt num">${g.bal>=1 ? `<span style="color:var(--due)">${inr(g.bal)}</span><small class="muted">to pay</small>` : `<small class="muted">Settled</small>`}</span></button>`).join("")}</div>`;
+  h += `<div class="sec-row"><h2 class="sec">${r.tx.length} entr${r.tx.length===1?"y":"ies"}</h2><div class="spacer"></div><span class="hint num">${[sum("in") ? "In " + inr(sum("in")) : "", sum("exp") ? "Bills " + inr(sum("exp")) : "", sum("pay") ? "Paid " + inr(sum("pay")) : ""].filter(Boolean).join(" · ")}</span></div>`;
+  h += r.tx.length ? txList(shown, true) + (r.tx.length > 200 ? `<p class="hint">Showing the latest 200. Add more words to narrow it down.</p>` : "") : `<div class="list"><div class="none">No entries match "${esc(S.sq)}".</div></div>`;
+  el.innerHTML = h;
+}
+
 /* ---------- sheets ---------- */
 function openSheet(html){ $("#layer").innerHTML = `<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`; const f = $("#layer input:not([type=hidden]):not([type=checkbox]):not([type=file]), #layer select"); }
 function closeSheet(){ $("#layer").innerHTML = ""; }
@@ -1182,8 +1371,12 @@ document.addEventListener("click", async ev => {
   if (act==="scrim" && ev.target!==a) return;
   switch (act){
     case "scrim": case "close": closeSheet(); break;
-    case "back": S.view = !CFG ? "connect" : S.view==="ledger" ? "parties" : "home"; render(); break;
-    case "ledger": S.view="ledger"; S.party=a.dataset.k; S.ledgerProj=""; window.scrollTo(0,0); render(); break;
+    case "back": S.view = !CFG ? "connect" : S.view==="search" ? (S.prevView || "home") : S.view==="ledger" ? (S.ledgerFrom || "parties") : "home"; render(); break;
+    case "search": S.prevView = S.view; S.view = "search"; window.scrollTo(0,0); render(); break;
+    case "sk": S.sk = a.dataset.k; render(); break;
+    case "rp-tab": S.rp.tab = a.dataset.k; render(); break;
+    case "rp-csv": reportCSV(); break;
+    case "ledger": S.ledgerFrom = S.view==="ledger" ? S.ledgerFrom : S.view; S.view="ledger"; S.party=a.dataset.k; S.ledgerProj=""; window.scrollTo(0,0); render(); break;
     case "ledger-proj": S.ledgerProj=a.dataset.p; render(); break;
     case "ledger-pay": { const g = partyGroups().find(r => r.key===S.party); const pid = S.ledgerProj || (duesList(null).find(r => norm(r.party)===S.party && r.due>0) || {}).projectId; const d = duesList(pid).find(r => norm(r.party)===S.party); entryForm("pay", null, {projectId:pid, party:g.name, amount: d && d.due>0 ? Math.round(d.due) : ""}); break; }
     case "ledger-share": { const txt = ledgerStatement(); const done = () => toast("Statement copied. Paste it in WhatsApp."); const fb = () => { openSheet(`<div class="sh-head"><h3>Statement</h3><button class="x" data-act="close" aria-label="Close">×</button></div><textarea id="stm" readonly style="width:100%;height:50vh;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:8px;font-size:13px">${esc(txt)}</textarea>`); const t=$("#stm"); t.focus(); t.select(); };
@@ -1233,11 +1426,25 @@ document.addEventListener("click", async ev => {
 });
 document.addEventListener("change", ev => { if (ev.target.id==="bm"){ S.billMonth = ev.target.value; render(); }
   if (ev.target.id==="lb-proj"){ S.lpid = ev.target.value; render(); }
+  if (ev.target.id==="rp-period"){ S.rp.period = ev.target.value; render(); }
+  if (ev.target.id==="rp-proj"){ S.rp.pid = ev.target.value; render(); }
+  if (ev.target.id==="rp-from" && ev.target.value){ S.rp.from = ev.target.value; render(); }
+  if (ev.target.id==="rp-to" && ev.target.value){ S.rp.to = ev.target.value; render(); }
   if (ev.target.id==="lb-date" && ev.target.value){ S.ldate = ev.target.value > today() ? today() : ev.target.value; render(); }
   if (ev.target.id==="lb-add" && ev.target.value){ const w = worker(ev.target.value); markAtt(w.id, "P"); }
   if (ev.target.dataset && ev.target.dataset.ot !== undefined){ setOT(ev.target.dataset.ot, n(ev.target.value)); }
   if (ev.target.id==="payday"){ LS.set("sk.payday", +ev.target.value); S.lweek = null; toast("Payday set to " + WEEKDAYS[+ev.target.value]); render(); } if (ev.target.id==="restore" && ev.target.files[0]) restoreBackup(ev.target.files[0]); });
-document.addEventListener("keydown", ev => { if (ev.key==="Enter" && ev.target.matches && ev.target.matches("tr[data-act=tx]")) ev.target.click(); if (ev.key==="Escape" && $("#layer").innerHTML) closeSheet(); });
+function showTip(rect){
+  const box = rect.closest(".chart-scroll"), tip = box && box.querySelector(".tip"); if (!tip) return;
+  const [m, i, o, net] = rect.dataset.tip.split("|");
+  tip.innerHTML = `<b>${m}</b><span><i class="sw-in"></i>In ${i}</span><span><i class="sw-out"></i>Out ${o}</span><span>Net ${net}</span>`;
+  tip.hidden = false; const x = +rect.dataset.x; tip.style.left = Math.max(4, Math.min(x - tip.offsetWidth/2, box.scrollWidth - tip.offsetWidth - 4)) + "px";
+  box.querySelectorAll(".hit.on").forEach(r => r.classList.remove("on")); rect.classList.add("on");
+}
+document.addEventListener("pointerover", ev => { const r = ev.target.closest && ev.target.closest("rect.hit"); if (r) showTip(r); });
+document.addEventListener("pointerout", ev => { if (ev.target.closest && ev.target.closest("svg") && !(ev.relatedTarget && ev.relatedTarget.closest && ev.relatedTarget.closest(".chart-scroll"))){ const t = document.querySelector(".chart .tip"); if (t) t.hidden = true; document.querySelectorAll(".hit.on").forEach(r => r.classList.remove("on")); } });
+document.addEventListener("click", ev => { const r = ev.target.closest && ev.target.closest("rect.hit"); if (r) showTip(r); });
+document.addEventListener("keydown", ev => { if (ev.key==="Enter" && ev.target.matches && ev.target.matches("tr[data-act]")) ev.target.click(); if (ev.key==="Escape" && $("#layer").innerHTML) closeSheet(); });
 
 /* ---------- boot ---------- */
 function boot(){
