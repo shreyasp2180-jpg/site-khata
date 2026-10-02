@@ -1094,7 +1094,9 @@ let pendingPhoto = null;
 function entryForm(kind, t, preset={}){
   const e = t || {kind, date:today(), mode:"UPI", projectId: preset.projectId || S.pid || (S.projects.find(p=>p.status==="active")||S.projects[0]||{}).id, party:preset.party||"", amount:preset.amount||""};
   kind = e.kind; pendingPhoto = null;
-  const projOpts = S.projects.filter(p=>p.status!=="done" || p.id===e.projectId).map(p=>`<option value="${p.id}" ${p.id===e.projectId?"selected":""}>${esc(p.name)}</option>`).join("");
+  const opt = p => `<option value="${p.id}" ${p.id===e.projectId?"selected":""}>${esc(p.name)}</option>`;
+  const runP = S.projects.filter(p => p.status!=="done"), doneP = S.projects.filter(p => p.status==="done");
+  const projOpts = (doneP.length ? `<optgroup label="Running">${runP.map(opt).join("")}</optgroup><optgroup label="Completed">${doneP.map(opt).join("")}</optgroup>` : runP.map(opt).join(""));
   const parties = partyNames().map(x=>`<option value="${esc(x)}">`).join("");
   const lbl = {in:"Money received", exp:"Expense / bill", pay:"Pay a vendor"};
   openSheet(`<div class="sh-head"><h3>${t?"Edit entry":"New entry"}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
