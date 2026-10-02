@@ -21,7 +21,7 @@ const PROJECT_COLS = [
 ];
 const ENTRY_COLS = [
   ['id', 'ID'], ['projectId', 'Project ID'], ['project', 'Project'], ['kind', 'Type'], ['date', 'Date'],
-  ['category', 'Category'], ['party', 'Party'], ['amount', 'Amount'], ['gst', 'GST'], ['paid', 'Paid'],
+  ['category', 'Category'], ['party', 'Party'], ['amount', 'Amount'], ['gst', 'GST'], ['paid', 'Paid with bill'],
   ['unpaid', 'Unpaid'], ['billNo', 'Bill no.'], ['mode', 'Mode'], ['note', 'Note'],
   ['receiptUrl', 'Receipt photo'], ['receiptId', 'Receipt file ID'], ['created', 'Created'], ['sample', 'Example']
 ];
@@ -106,12 +106,15 @@ function handle_(req) {
       t.unpaid = t.kind === 'exp' ? (Number(t.amount) || 0) - (Number(t.paid) || 0) : '';
       const row = Object.assign({}, t, { kind: KIND_LABEL[t.kind] || t.kind });
       upsert_('Entries', ENTRY_COLS, row);
+      reallocate_(t.projectId, t.party);
+      if (old && (old.projectId !== t.projectId || norm_(old.party) !== norm_(t.party))) reallocate_(old.projectId, old.party);
       return { receiptId: t.receiptId, receiptUrl: t.receiptUrl };
     }
     case 'deleteEntry': {
       const old = find_('Entries', ENTRY_COLS, req.id);
       if (old) trash_(old.receiptId);
       remove_('Entries', ENTRY_COLS, req.id);
+      if (old) reallocate_(old.projectId, old.party);
       return {};
     }
     case 'getReceipt': {
@@ -122,6 +125,29 @@ function handle_(req) {
     default:
       throw new Error('Unknown action ' + req.action);
   }
+}
+
+/* Later vendor payments are applied to that vendor's bills on the same project,
+   oldest bill first, so the Unpaid column shows what is really still owed. */
+function norm_(s) { return String(s || '').trim().toLowerCase(); }
+function reallocate_(projectId, party) {
+  const key = norm_(party);
+  if (!projectId || !key) return;
+  const sh = sheet_('Entries', ENTRY_COLS), data = sh.getDataRange().getValues();
+  const time = v => v instanceof Date ? v.getTime() : (v ? new Date(String(v) + 'T00:00:00').getTime() : 0);
+  let pool = 0; const bills = [];
+  for (let i = 1; i < data.length; i++) {
+    const r = data[i];
+    if (r[1] !== projectId || norm_(r[6]) !== key) continue;
+    if (r[3] === 'Vendor payment' || r[3] === 'pay') pool += Number(r[7]) || 0;
+    else if (r[3] === 'Expense' || r[3] === 'exp') bills.push({ row: i + 1, t: time(r[4]), c: Number(r[16]) || 0, rem: Math.max(0, (Number(r[7]) || 0) - (Number(r[9]) || 0)), cur: r[10] });
+  }
+  bills.sort((a, b) => a.t - b.t || a.c - b.c);
+  bills.forEach(b => {
+    const take = Math.min(b.rem, pool); pool -= take;
+    const left = b.rem - take;
+    if (left !== b.cur) sh.getRange(b.row, 11).setValue(left);
+  });
 }
 
 /* ---------- helpers ---------- */

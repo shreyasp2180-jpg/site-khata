@@ -281,6 +281,27 @@ function duesList(pid){
   }
   return [...m.values()].map(r => ({...r, due: r.billed - r.paid})).filter(r => Math.abs(r.due) >= 1).sort((a,b)=>b.due-a.due);
 }
+/* Later "Pay vendor" payments are applied to that vendor's bills on the same project, oldest bill first. */
+let ALLOC = new Map(), allocSrc = null;
+function alloc(){
+  if (allocSrc === S.txns) return ALLOC;
+  const groups = new Map();
+  for (const t of S.txns){
+    if ((t.kind!=="exp" && t.kind!=="pay") || !norm(t.party)) continue;
+    const k = t.projectId + "|" + norm(t.party);
+    const g = groups.get(k) || {bills:[], pool:0};
+    if (t.kind==="exp") g.bills.push(t); else g.pool += n(t.amount);
+    groups.set(k, g);
+  }
+  const m = new Map();
+  for (const g of groups.values()){
+    g.bills.sort((a,b) => (a.date||"").localeCompare(b.date||"") || (a.created||0)-(b.created||0));
+    for (const b of g.bills){ const rem = Math.max(0, n(b.amount)-n(b.paid)); const take = Math.min(rem, g.pool); g.pool -= take; m.set(b.id, take); }
+  }
+  ALLOC = m; allocSrc = S.txns; return m;
+}
+const paidLater = t => t.kind==="exp" ? (alloc().get(t.id) || 0) : 0;
+const unpaidOf = t => t.kind==="exp" ? Math.max(0, n(t.amount) - n(t.paid) - paidLater(t)) : 0;
 function partyNames(){ const s = new Map(); for (const t of S.txns) if (norm(t.party)) s.set(norm(t.party), t.party.trim()); return [...s.values()].sort(); }
 
 /* ---------- storage: this phone ---------- */
@@ -340,12 +361,12 @@ async function pull(){
   try {
     setSync("syncing");
     const r = await api({action:"load"});
-    S.projects = r.projects || []; S.txns = r.txns || [];
+    S.projects = r.projects || []; S.txns = r.txns || []; allocSrc = null;
     persist(); setSync("ok"); render();
   } catch(e){ setSync(e.code==="offline" ? "offline" : "error", e); }
 }
 function commit(op){
-  persist(); render();
+  allocSrc = null; persist(); render();
   if (!CFG || CFG.mode!=="sheet") return;
   queue.push(op); LS.set("sk.queue", queue); flush();
 }
@@ -579,8 +600,8 @@ function txRow(t, showProject){
   if (k!=="in" && t.note) bits.push(t.note);
   if (k==="in") bits.push(t.mode);
   if (showProject && p) bits.push(p.name);
-  const due = k==="exp" ? n(t.amount)-n(t.paid) : 0;
-  const sub = k==="exp" && due>=1 ? `<small style="color:var(--due)">${inr(due)} unpaid</small>` : k==="exp" && t.billNo ? `<small class="mono muted">${esc(t.billNo)}</small>` : "";
+  const due = unpaidOf(t);
+  const sub = k==="exp" && due>=1 ? `<small style="color:var(--due)">${inr(due)} unpaid</small>` : k==="exp" && paidLater(t)>=1 && !t.billNo ? `<small style="color:var(--in)">Fully paid</small>` : k==="exp" && t.billNo ? `<small class="mono muted">${esc(t.billNo)}</small>` : "";
   return `<button class="tx" data-act="tx" data-id="${t.id}"><span class="ico ${k}">${ico}</span>
     <span style="min-width:0"><span class="t1" style="display:block">${esc(title)}${t.receipt?" 📎":""}</span><span class="t2" style="display:block">${esc(bits.filter(Boolean).join(" · "))}</span></span>
     <span class="amt num ${k==="in"?"in":""}">${k==="in"?"+":"−"}${inr(t.amount)}${sub}</span></button>`;
@@ -719,6 +740,21 @@ function entryForm(kind, t, preset={}){
     <div id="e-confirm"></div>
     <div class="f-actions">${t?`<button type="button" class="btn danger" data-act="del-tx" data-id="${t.id}">Delete</button>`:""}<button class="btn primary" type="submit">${t?"Save":"Add "+lbl[kind].toLowerCase()}</button></div>
   </form>`);
+  if (kind==="pay"){
+    const hint = document.createElement("span"); hint.className = "hint"; hint.id = "e-due-hint"; $("#e-party").closest("label").after(hint);
+    const upd = () => {
+      const pid = $("#e-proj").value, name = norm($("#e-party").value);
+      const rows = duesList(pid);
+      $("#plist").innerHTML = rows.filter(r => r.due > 0).map(r => `<option value="${esc(r.party)}">${inr(r.due)} due</option>`).join("");
+      if (!name){ hint.textContent = rows.some(r => r.due > 0) ? "Pick a vendor from the list to see what you owe them on this project." : "No unpaid bills on this project."; hint.style.color = ""; return; }
+      const r = rows.find(x => norm(x.party)===name);
+      const billed = S.txns.some(t => t.kind==="exp" && t.projectId===pid && norm(t.party)===name);
+      if (r && r.due > 0){ hint.textContent = "Owes " + inr(r.due) + " on this project."; hint.style.color = "var(--due)"; }
+      else if (billed){ hint.textContent = "All bills from this vendor on this project are paid. This payment will show as an advance."; hint.style.color = "var(--due)"; }
+      else { hint.textContent = "No bills from this name on this project. Check the spelling; otherwise this payment will show as an advance."; hint.style.color = "var(--out)"; }
+    };
+    $("#e-party").addEventListener("input", upd); $("#e-proj").addEventListener("change", upd); upd();
+  }
   const full = $("#e-full");
   if (full) full.addEventListener("change", () => { $("#e-paidwrap").hidden = full.checked; });
   const ph = $("#e-photo");
@@ -743,12 +779,12 @@ function compress(file){ return new Promise((res, rej) => { const img = new Imag
 async function txDetail(t){
   const p = proj(t.projectId);
   const rows = [["Project", p?p.name:"—"],["Date", fmtDate(t.date)],["Amount", inr(t.amount)]];
-  if (t.kind==="exp"){ rows.push(["Category", t.category],["Party", t.party||"—"],["GST in bill", inr(n(t.gst))],["Bill no.", t.billNo||"—"],["Paid", inr(n(t.paid))],["Unpaid", inr(n(t.amount)-n(t.paid))]); }
+  if (t.kind==="exp"){ rows.push(["Category", t.category],["Party", t.party||"—"],["GST in bill", inr(n(t.gst))],["Bill no.", t.billNo||"—"],["Paid with bill", inr(n(t.paid))]); if (paidLater(t)>=1) rows.push(["Paid later", inr(paidLater(t))]); rows.push(["Unpaid", inr(unpaidOf(t))]); }
   if (t.kind==="pay") rows.push(["Paid to", t.party]);
   rows.push(["Mode", t.mode],["Note", t.note||"—"]);
   openSheet(`<div class="sh-head"><h3>${t.kind==="in"?"Money received":t.kind==="exp"?"Expense":"Vendor payment"}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
     <div class="detail"><dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd class="num">${esc(v)}</dd>`).join("")}</dl>${t.receipt?`<div id="rcpt" class="hint">Loading receipt…</div>`:""}</div>
-    <div class="f-actions">${t.kind==="exp" && n(t.amount)-n(t.paid)>=1 ? `<button class="btn" data-act="pay-due" data-p="${t.projectId}" data-party="${esc(t.party)}" data-amt="${Math.round(n(t.amount)-n(t.paid))}">Pay balance</button>`:""}<button class="btn primary" data-act="edit-tx" data-id="${t.id}">Edit</button></div>`);
+    <div class="f-actions">${t.kind==="exp" && unpaidOf(t)>=1 && norm(t.party) ? `<button class="btn" data-act="pay-due" data-p="${t.projectId}" data-party="${esc(t.party)}" data-amt="${Math.round(unpaidOf(t))}">Pay balance</button>`:""}<button class="btn primary" data-act="edit-tx" data-id="${t.id}">Edit</button></div>`);
   if (t.receipt){ try { const img = await store.getReceipt(t); const el = $("#rcpt"); const link = t.receiptUrl ? `<a class="hint" href="${esc(t.receiptUrl)}" target="_blank" rel="noopener">Open in Google Drive</a>` : ""; if (el) el.outerHTML = (img ? `<img class="receipt-big" src="${img}" alt="Receipt photo">` : `<div class="hint">Receipt photo not on this phone.</div>`) + link; } catch(e) { const el=$("#rcpt"); if (el) el.textContent = e && e.code==="offline" ? "Go online to load this receipt." : "Couldn't load the receipt."; } }
 }
 
@@ -758,7 +794,7 @@ function exportCSV(rows, filename){
   saveFile(filename, "\ufeff" + csv, "text/csv;charset=utf-8");
 }
 const txHead = ["Date","Project","Type","Category","Party","Amount","GST","Paid","Unpaid","Bill no.","Mode","Note"];
-const txCSV = t => { const p = proj(t.projectId); return [t.date, p?p.name:"", {in:"Money in",exp:"Expense",pay:"Vendor payment"}[t.kind], t.category||"", t.party||"", n(t.amount), t.kind==="exp"?n(t.gst):"", t.kind==="exp"?n(t.paid):"", t.kind==="exp"?n(t.amount)-n(t.paid):"", t.billNo||"", t.mode||"", t.note||""]; };
+const txCSV = t => { const p = proj(t.projectId); return [t.date, p?p.name:"", {in:"Money in",exp:"Expense",pay:"Vendor payment"}[t.kind], t.category||"", t.party||"", n(t.amount), t.kind==="exp"?n(t.gst):"", t.kind==="exp"?n(t.paid)+paidLater(t):"", t.kind==="exp"?unpaidOf(t):"", t.billNo||"", t.mode||"", t.note||""]; };
 
 /* ---------- events ---------- */
 document.addEventListener("click", async ev => {
