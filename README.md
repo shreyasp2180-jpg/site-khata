@@ -38,3 +38,4 @@ Open the app link in Chrome, then use **⋮ → Add to Home screen**. On iPhone,
 | `index.html` | The whole app |
 | `google-sheet-script.gs` | The script that goes into the Google Sheet |
 | `sw.js`, `manifest.webmanifest`, `icons/` | Offline support and home-screen install |
+| `lib/` | PDF maker (jsPDF, MIT licence) and a DejaVu Sans font subset with the ₹ sign (free licence in `lib/DejaVu-LICENSE.txt`) |

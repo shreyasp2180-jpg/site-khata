@@ -619,6 +619,12 @@ function renderSettings(){
     : `<p class="muted" style="margin:0">Connect a Google Sheet to keep entries safe if this phone is lost, and to use them on a laptop too.</p><div class="f-actions"><button class="btn primary" data-act="connect">Connect Google Sheet</button></div>`}
   </section>
   <section class="setup-card">
+    <div class="sc-head"><h3>Business details</h3></div>
+    <p class="muted" style="margin:0">Printed at the top of every PDF statement.</p>
+    <label class="fl" for="firm-name">Business name<input id="firm-name" value="${esc(firmInfo().name || "")}" placeholder="e.g. Patil Constructions & Interiors"></label>
+    <div class="fr"><label class="fl" for="firm-phone">Phone<input id="firm-phone" inputmode="tel" value="${esc(firmInfo().phone || "")}" placeholder="Optional"></label><label class="fl" for="firm-gstin">GSTIN<input id="firm-gstin" value="${esc(firmInfo().gstin || "")}" placeholder="Optional"></label></div>
+  </section>
+  <section class="setup-card">
     <div class="sc-head"><h3>Labour payday</h3></div>
     <label class="fl" for="payday">Wages are paid every<select id="payday">${WEEKDAYS.map((d,i) => `<option value="${i}" ${i===payday()?"selected":""}>${d}</option>`).join("")}</select></label>
     <p class="muted" style="margin:0">Each wage week runs ${WEEKDAYS[payday()]} to ${WEEKDAYS[(payday()+6)%7]} and is paid on the following ${WEEKDAYS[payday()]}.</p>
@@ -635,8 +641,8 @@ function renderSettings(){
   </section>
   <section class="setup-card">
     <div class="sc-head"><h3>Export</h3></div>
-    <p class="muted" style="margin:0">Every entry from every project as a spreadsheet file (CSV) that opens in Excel or Google Sheets.</p>
-    <div class="f-actions"><button class="btn" data-act="csv-all">Export all entries</button></div>
+    <p class="muted" style="margin:0">Every entry from every project, with totals, dues and the final balance at the time of export. CSV opens in Excel or Google Sheets.</p>
+    <div class="f-actions"><button class="btn primary" data-act="pdf-all">All entries PDF</button><button class="btn" data-act="csv-all">CSV</button></div>
   </section>
   <p class="hint">Tip: in Chrome, open the ⋮ menu and choose <b>Add to Home screen</b> to open Site Khata like an app.</p>`;
 }
@@ -763,7 +769,7 @@ function renderProject(){
     h += `<h2 class="sec">Where the money went</h2><div class="catbars">` + cats.map(([c,v]) => `<div class="cb"><span class="n">${esc(c)}</span><span class="t"><i style="width:${v/max*100}%"></i></span><span class="a num">${short(v)}</span></div>`).join("") + `</div>`;
   }
   const tabs = [["all","All"],["in","Money in"],["exp","Expenses"],["pay","Vendor payments"],["dues","Dues"]];
-  h += `<div class="sec-row"><h2 class="sec">Entries · ${s.count}</h2><div class="spacer"></div><button class="btn small" data-act="csv-project">Export CSV</button></div>
+  h += `<div class="sec-row"><h2 class="sec">Entries · ${s.count}</h2><div class="spacer"></div><button class="btn small" data-act="pdf-project">Export PDF</button><button class="btn small" data-act="csv-project">CSV</button></div>
     <div class="tabs" role="group" aria-label="Filter entries">${tabs.map(([k,l])=>`<button class="tab" data-act="tab" data-k="${k}" aria-pressed="${S.tab===k}">${l}</button>`).join("")}</div>`;
   if (S.tab==="dues") h += duesBlock(duesList(p.id), false);
   else h += txList(S.txns.filter(t => t.projectId===p.id && (S.tab==="all" || t.kind===S.tab)), false);
@@ -870,7 +876,7 @@ function renderLedger(){
   h += rows.length ? rows.map(r => `<tr data-act="tx" data-id="${r.t.id}" tabindex="0"><td class="d">${esc(fmtDate(r.date).replace(/ \d{4}$/,""))}<span>${esc((r.date||"").slice(0,4))}</span></td><td class="det">${esc(r.details)}${!S.ledgerProj && pids.length>1 ? `<span>${esc(r.pname)}</span>` : ""}</td><td class="r" data-l="Bill">${r.bill ? inr(r.bill) : ""}</td><td class="r" data-l="Paid" style="color:var(--in)">${r.paid ? inr(r.paid) : ""}</td><td class="r b" data-l="Bal." style="color:${r.bal>=1?"var(--due)":r.bal<=-1?"var(--in)":"var(--muted)"}">${balText(r.bal)}</td></tr>`).join("")
     : `<tr><td colspan="5" class="none">No entries for this project.</td></tr>`;
   h += `</tbody><tfoot><tr><td colspan="2">Closing balance</td><td class="r" data-l="Billed">${inr(billed)}</td><td class="r" data-l="Paid">${inr(paid)}</td><td class="r b" data-l="Balance">${balText(bal)}</td></tr></tfoot></table></div>
-    <div class="sec-row">${bal>=1 ? `<button class="btn primary" data-act="ledger-pay">Record payment</button>` : ""}<button class="btn" data-act="ledger-share">Copy statement</button><button class="btn" data-act="ledger-csv">Export CSV</button></div>
+    <div class="sec-row">${bal>=1 ? `<button class="btn primary" data-act="ledger-pay">Record payment</button>` : ""}<button class="btn" data-act="pdf-ledger">Export PDF</button><button class="btn" data-act="ledger-share">Copy statement</button><button class="btn" data-act="ledger-csv">CSV</button></div>
     <p class="hint">Tap any row to see or edit that entry. "Copy statement" copies a summary you can paste into WhatsApp to agree the balance with ${esc(g.name)}.</p>`;
   $("#main").innerHTML = h;
 }
@@ -1003,7 +1009,7 @@ function weekView(pid){
       ${r.remaining >= 1 ? `<button class="btn small" data-act="pay-wages" data-w="${r.wid}">Pay</button>` : "<span></span>"}</div>
       <div class="wdays">${days.map(d => `<span class="wd s-${r.marks[d]||"x"}" title="${dDay(d)}"><i>${new Date(d+"T00:00:00").toLocaleDateString("en-IN",{weekday:"narrow"})}</i>${r.marks[d]==="H" ? "½" : r.marks[d] || "–"}</span>`).join("")}</div></div>`;
   }
-  h += `</div><div class="sec-row">${due.length > 1 ? `<button class="btn primary" data-act="pay-wages" data-w="">Pay all · ${inr(tot)}</button>` : ""}<button class="btn" data-act="copy-wages">Copy wage sheet</button></div>
+  h += `</div><div class="sec-row">${due.length > 1 ? `<button class="btn primary" data-act="pay-wages" data-w="">Pay all · ${inr(tot)}</button>` : ""}<button class="btn" data-act="pdf-wages">Wage sheet PDF</button><button class="btn" data-act="copy-wages">Copy wage sheet</button></div>
     <p class="hint">Paying records a Labour expense for each worker on this project. Kharchi given during or before the week is deducted automatically.</p>`;
   return h;
 }
@@ -1116,7 +1122,7 @@ const outflow = t => t.kind==="exp" ? n(t.paid) : t.kind==="pay" ? n(t.amount) :
 function renderReports(){
   S.rp = S.rp || {period:"fy", pid:"", tab:"summary"};
   const [a, b] = periodRange();
-  header("Reports", rangeLabel(a, b), false, `<button class="btn small" data-act="rp-csv">Export CSV</button>`);
+  header("Reports", rangeLabel(a, b), false, `<button class="btn small" data-act="rp-pdf">Export PDF</button>`);
   let h = `<div class="filters">
     <label class="fl" for="rp-period">Period<select id="rp-period">${PERIODS.map(([k,l]) => `<option value="${k}" ${S.rp.period===k?"selected":""}>${l}</option>`).join("")}</select></label>
     <label class="fl" for="rp-proj">Project<select id="rp-proj"><option value="">All projects</option>${S.projects.map(p => `<option value="${p.id}" ${S.rp.pid===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select></label>
@@ -1129,6 +1135,7 @@ function renderReports(){
   else if (S.rp.tab==="spending") h += rpSpending(tx);
   else if (S.rp.tab==="gst") h += rpGst(tx);
   else h += rpLabour(tx, a, b);
+  h += `<div class="sec-row"><button class="btn small" data-act="rp-pdf">Export PDF</button><button class="btn small" data-act="rp-csv">Spreadsheet (CSV)</button></div>`;
   $("#main").innerHTML = h;
 }
 function rpMonthly(tx, a, b){
@@ -1251,6 +1258,231 @@ function paintSearch(){
   h += `<div class="sec-row"><h2 class="sec">${r.tx.length} entr${r.tx.length===1?"y":"ies"}</h2><div class="spacer"></div><span class="hint num">${[sum("in") ? "In " + inr(sum("in")) : "", sum("exp") ? "Bills " + inr(sum("exp")) : "", sum("pay") ? "Paid " + inr(sum("pay")) : ""].filter(Boolean).join(" · ")}</span></div>`;
   h += r.tx.length ? txList(shown, true) + (r.tx.length > 200 ? `<p class="hint">Showing the latest 200. Add more words to narrow it down.</p>` : "") : `<div class="list"><div class="none">No entries match "${esc(S.sq)}".</div></div>`;
   el.innerHTML = h;
+}
+
+/* ---------- PDF statements ---------- */
+let pdfLoading = null;
+function loadScript(src){ return new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = () => rej(new Error("load")); document.head.appendChild(el); }); }
+function toB64(buf){ let out = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) out += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(out); }
+function pdfLib(){
+  return pdfLoading || (pdfLoading = (async () => {
+    if (!window.jspdf) await loadScript("lib/jspdf.umd.min.js");
+    if (!window.jspdf.jsPDF.API.autoTable) await loadScript("lib/jspdf.plugin.autotable.min.js");
+    const [reg, bold] = await Promise.all(["lib/DejaVuSans-subset.ttf", "lib/DejaVuSans-Bold-subset.ttf"].map(u => fetch(u).then(r => { if (!r.ok) throw new Error("load"); return r.arrayBuffer(); })));
+    return {jsPDF: window.jspdf.jsPDF, reg: toB64(reg), bold: toB64(bold)};
+  })().catch(e => { pdfLoading = null; throw e; }));
+}
+const firmInfo = () => LS.get("sk.firm", {}) || {};
+const stampNow = () => new Date().toLocaleString("en-IN", {day:"numeric", month:"short", year:"numeric", hour:"numeric", minute:"2-digit"});
+const amt = v => v ? inr(v) : "";
+
+/* Money position for a set of projects at this moment: what is owed both ways and where it nets out. */
+function position(pids){
+  const set = new Set(pids);
+  let rec = 0, paidOut = 0, contract = 0, billed = 0;
+  for (const id of pids){ const s = stats(id); rec += s.rec; paidOut += s.paidOut; contract += s.contract; billed += s.billed; }
+  const dl = duesList(null).filter(r => set.has(r.projectId));
+  const vendors = dl.filter(r => r.due >= 1), advances = dl.filter(r => r.due <= -1);
+  const clients = pids.map(id => ({p:proj(id), bal:stats(id).clientBal})).filter(x => x.p && x.bal >= 1);
+  const dues = vendors.reduce((x,r) => x + r.due, 0), adv = advances.reduce((x,r) => x - r.due, 0), toCollect = clients.reduce((x,c) => x + c.bal, 0);
+  const cash = rec - paidOut;
+  return {rec, paidOut, contract, billed, cash, dues, adv, toCollect, final: cash + toCollect - dues, vendors, clients};
+}
+function positionRows(P, opts = {}){
+  const rows = [];
+  if (P.contract) rows.push(["Contract value", inr(P.contract)]);
+  rows.push(["Received from client" + (opts.multi ? "s" : ""), inr(P.rec)]);
+  if (P.contract) rows.push(["Balance to collect from client" + (opts.multi ? "s" : ""), inr(P.toCollect)]);
+  rows.push(["Total bills", inr(P.billed)], ["Paid to vendors & labour", inr(P.paidOut)], ["Dues to vendors & labour", inr(P.dues)]);
+  if (P.adv) rows.push(["Advances given to vendors & labour", inr(P.adv)]);
+  rows.push(["Cash in hand (received − paid)", inr(P.cash)]);
+  rows.push(["Final balance (cash in hand + to collect − dues)", inr(P.final), true]);
+  return rows;
+}
+
+async function makePdf(spec){
+  const L = await pdfLib();
+  const doc = new L.jsPDF({unit:"mm", format:"a4", orientation: spec.landscape ? "landscape" : "portrait"});
+  doc.addFileToVFS("dv.ttf", L.reg); doc.addFont("dv.ttf", "DV", "normal");
+  doc.addFileToVFS("dvb.ttf", L.bold); doc.addFont("dvb.ttf", "DV", "bold");
+  const firm = firmInfo(), stamp = stampNow(), M = 14, W = spec.landscape ? 297 : 210, H = spec.landscape ? 210 : 297;
+  const ink = [21,32,43], muted = [94,107,118], line = [213,219,222], blue = [29,78,216];
+  let y = 16;
+  doc.setFont("DV", "bold"); doc.setFontSize(15); doc.setTextColor(...ink); doc.text(firm.name || "Site Khata", M, y);
+  doc.setFont("DV", "normal"); doc.setFontSize(8.5); doc.setTextColor(...muted);
+  const fl = [firm.phone, firm.gstin ? "GSTIN " + firm.gstin : ""].filter(Boolean).join("   ·   ");
+  if (fl) doc.text(fl, M, y + 5);
+  doc.text("Generated " + stamp, W - M, y, {align:"right"});
+  y += 11; doc.setDrawColor(...blue); doc.setLineWidth(0.6); doc.line(M, y, W - M, y); y += 8;
+  doc.setFont("DV", "bold"); doc.setFontSize(13); doc.setTextColor(...ink); doc.text(spec.title, M, y); y += 5.5;
+  doc.setFont("DV", "normal"); doc.setFontSize(9.5); doc.setTextColor(...muted);
+  for (const s of (spec.lines || []).filter(Boolean)){ doc.text(doc.splitTextToSize(s, W - 2*M), M, y); y += 4.8; }
+  y += 3;
+  const base = {theme:"grid", margin:{left:M, right:M, top:16, bottom:16}, showHead:"everyPage", showFoot:"lastPage",
+    styles:{font:"DV", fontSize:8.4, cellPadding:1.7, lineColor:line, lineWidth:0.2, textColor:ink, overflow:"linebreak", valign:"top"},
+    headStyles:{font:"DV", fillColor:[236,239,240], textColor:[60,70,80], fontStyle:"bold"},
+    footStyles:{font:"DV", fillColor:[227,234,255], textColor:ink, fontStyle:"bold"}};
+  const heading = text => { if (y > H - 40){ doc.addPage(); y = 20; } doc.setFont("DV", "bold"); doc.setFontSize(10.5); doc.setTextColor(...ink); doc.text(text, M, y); y += 2.5; };
+  for (const t of spec.tables || []){
+    if (t.heading) heading(t.heading);
+    if (!t.body.length){ doc.setFont("DV", "normal"); doc.setFontSize(9); doc.setTextColor(...muted); doc.text("No entries.", M, y + 4); y += 12; continue; }
+    doc.autoTable({...base, startY:y + 1, head:[t.head], body:t.body, foot:t.foot ? [t.foot] : undefined, columnStyles:t.cols || {},
+      didParseCell: d => { if (t.right && t.right.includes(d.column.index)) d.cell.styles.halign = "right"; if (t.rowStyle && d.section==="body") t.rowStyle(d); }});
+    y = doc.lastAutoTable.finalY + 8;
+  }
+  const box = (title, rows, color) => {
+    if (!rows.length) return;
+    if (y + rows.length * 5.8 + 12 > H - 16){ doc.addPage(); y = 20; }
+    doc.autoTable({startY:y, margin:{left:M, right:M}, theme:"plain", tableLineColor:line, tableLineWidth:0.25,
+      head:[[{content:title, colSpan:2}]],
+      body:rows.map(r => [{content:r[0], styles:{fontStyle:r[2] ? "bold" : "normal"}}, {content:r[1], styles:{halign:"right", fontStyle:r[2] ? "bold" : "normal", fillColor:r[2] ? [227,234,255] : false}}]),
+      styles:{font:"DV", fontSize:9.4, cellPadding:{top:1.6, bottom:1.6, left:3, right:3}, textColor:ink},
+      headStyles:{font:"DV", fontStyle:"bold", fillColor:color || blue, textColor:[255,255,255]}});
+    y = doc.lastAutoTable.finalY + 6;
+  };
+  for (const b of spec.boxes || []) box(b.title, b.rows, b.color);
+  if (spec.positionPids){
+    const P = position(spec.positionPids), multi = spec.positionPids.length > 1;
+    box("Position as on " + stamp, positionRows(P, {multi}));
+    if (P.vendors.length){
+      heading("Dues to vendors & labour as on " + stamp);
+      doc.autoTable({...base, startY:y + 1, head:[multi ? ["Party", "Project", "Billed", "Paid", "Due"] : ["Party", "Billed", "Paid", "Due"]],
+        body:P.vendors.map(r => multi ? [r.party, (proj(r.projectId)||{}).name || "", inr(r.billed), inr(r.paid), inr(r.due)] : [r.party, inr(r.billed), inr(r.paid), inr(r.due)]),
+        foot:[multi ? ["Total dues", "", "", "", inr(P.dues)] : ["Total dues", "", "", inr(P.dues)]],
+        didParseCell: d => { if (d.column.index >= (multi ? 2 : 1)) d.cell.styles.halign = "right"; }});
+      y = doc.lastAutoTable.finalY + 8;
+    }
+    if (multi && P.clients.length){
+      heading("Balance to collect from clients");
+      doc.autoTable({...base, startY:y + 1, head:[["Project", "Client", "Contract", "Received", "To collect"]],
+        body:P.clients.map(c => [c.p.name, c.p.client || "", inr(n(c.p.contract)), inr(stats(c.p.id).rec), inr(c.bal)]),
+        foot:[["Total", "", "", "", inr(P.toCollect)]],
+        didParseCell: d => { if (d.column.index >= 2) d.cell.styles.halign = "right"; }});
+      y = doc.lastAutoTable.finalY + 8;
+    }
+  }
+  if (spec.signatures){
+    if (y > H - 40){ doc.addPage(); y = 30; }
+    y = Math.max(y + 14, y); doc.setDrawColor(...muted); doc.setLineWidth(0.2);
+    spec.signatures.forEach((s, i) => { const x = M + i * ((W - 2*M) / spec.signatures.length); doc.line(x, y, x + 55, y); doc.setFont("DV", "normal"); doc.setFontSize(8.5); doc.setTextColor(...muted); doc.text(s, x, y + 4.5); });
+  }
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++){
+    doc.setPage(i); doc.setFont("DV", "normal"); doc.setFontSize(7.5); doc.setTextColor(...muted);
+    doc.text((firm.name || "Site Khata") + "  ·  " + spec.title, M, H - 8);
+    doc.text("Page " + i + " of " + pages, W - M, H - 8, {align:"right"});
+  }
+  return {blob:doc.output("blob"), pages, filename:spec.filename.replace(/[^\w\- .]+/g, "").replace(/\s+/g, "-") + ".pdf", title:spec.title};
+}
+async function exportPdf(build){
+  toast("Preparing PDF…");
+  let r;
+  try { r = await makePdf(build()); }
+  catch(e){ console.error(e); toast(e && e.message==="load" ? "Couldn't load the PDF maker. Connect to the internet once, then try again." : "Couldn't make the PDF. Try again."); return; }
+  const file = new File([r.blob], r.filename, {type:"application/pdf"});
+  const canShare = !!(navigator.canShare && (() => { try { return navigator.canShare({files:[file]}); } catch { return false; } })());
+  window.__lastPdf = r; // used by tests
+  openSheet(`<div class="sh-head"><h3>PDF ready</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+    <p class="hint" style="margin:0 0 12px">${esc(r.filename)} · ${r.pages} page${r.pages>1?"s":""}</p>
+    <div class="f-actions">${canShare ? `<button class="btn primary" id="pdf-share">Share</button>` : ""}<button class="btn ${canShare ? "" : "primary"}" id="pdf-dl">Download</button><button class="btn" id="pdf-open">Open</button></div>
+    ${canShare ? `<p class="hint">Share sends it straight to WhatsApp, email or Drive.</p>` : ""}`);
+  const url = URL.createObjectURL(r.blob);
+  if (canShare) $("#pdf-share").addEventListener("click", () => navigator.share({files:[file], title:r.title}).then(closeSheet).catch(() => {}));
+  $("#pdf-dl").addEventListener("click", () => { const a = document.createElement("a"); a.href = url; a.download = r.filename; document.body.appendChild(a); a.click(); a.remove(); toast("PDF downloaded"); });
+  $("#pdf-open").addEventListener("click", () => { const w = window.open(url, "_blank"); if (!w) location.href = url; });
+}
+
+/* What goes into each PDF */
+function particulars(t){
+  if (t.kind==="in") return ["Received", t.note, t.mode].filter(Boolean).join(" · ");
+  if (t.kind==="exp") return [t.party || "Expense", t.category, t.note].filter(Boolean).join(" · ");
+  return ["Paid " + (t.party || "vendor"), t.note, t.mode].filter(Boolean).join(" · ");
+}
+const byDate = (a, b) => (a.date||"").localeCompare(b.date||"") || (a.created||0) - (b.created||0);
+function entriesTable(list, withProject){
+  const rows = [...list].sort(byDate);
+  const rec = rows.filter(t => t.kind==="in").reduce((x,t)=>x+n(t.amount),0), bills = rows.filter(t => t.kind==="exp").reduce((x,t)=>x+n(t.amount),0), paid = rows.reduce((x,t)=>x+outflow(t),0);
+  const head = withProject ? ["Date", "Project", "Particulars", "Bill no.", "Received", "Bill amount", "Paid"] : ["Date", "Particulars", "Bill no.", "Received", "Bill amount", "Paid"];
+  const body = rows.map(t => { const r = [fmtDate(t.date)]; if (withProject) r.push((proj(t.projectId)||{}).name || ""); r.push(particulars(t), t.billNo || "", t.kind==="in" ? inr(t.amount) : "", t.kind==="exp" ? inr(t.amount) : "", outflow(t) ? inr(outflow(t)) : ""); return r; });
+  const foot = withProject ? ["Total", "", rows.length + " entries", "", inr(rec), inr(bills), inr(paid)] : ["Total", rows.length + " entries", "", inr(rec), inr(bills), inr(paid)];
+  const k = withProject ? 4 : 3;
+  return {head, body, foot, right:[k, k+1, k+2], cols: withProject ? {0:{cellWidth:20}, 1:{cellWidth:28}, 3:{cellWidth:18}} : {0:{cellWidth:22}, 2:{cellWidth:20}}};
+}
+function pdfProject(){
+  const p = proj(S.pid);
+  return {title:"Project statement: " + p.name, filename:"Statement " + p.name + " " + today(),
+    lines:[[p.client && "Client: " + p.client, p.site && "Site: " + p.site, p.type].filter(Boolean).join("   ·   "), `Contract value ${inr(n(p.contract))}   ·   ${STATUS[p.status]}${p.start ? "   ·   started " + fmtDate(p.start) : ""}`, "All entries up to " + fmtDate(today())],
+    tables:[{heading:"Entries", ...entriesTable(S.txns.filter(t => t.projectId===p.id), false)}], positionPids:[p.id]};
+}
+function pdfAll(){
+  return {title:"All projects: statement of entries", filename:"Site Khata all entries " + today(), lines:[S.projects.length + " projects · all entries up to " + fmtDate(today())],
+    tables:[{heading:"Entries", ...entriesTable(S.txns, true)}], positionPids:S.projects.map(p => p.id)};
+}
+function pdfLedger(){
+  const g = partyGroups().find(r => r.key===S.party), rows = ledgerRows(S.party, S.ledgerProj), pr = S.ledgerProj ? proj(S.ledgerProj) : null;
+  const billed = rows.reduce((x,r)=>x+r.bill,0), paid = rows.reduce((x,r)=>x+r.paid,0), bal = billed - paid, stamp = stampNow();
+  const perProj = !pr ? [...g.projects].filter(id => proj(id)).map(id => { const st = ledgerRows(g.key, id); return [proj(id).name, inr(st.reduce((x,r)=>x+r.bill,0)), inr(st.reduce((x,r)=>x+r.paid,0)), st.length ? balText(st[st.length-1].bal) : "Nil"]; }) : [];
+  return {title:"Ledger: " + g.name, filename:"Ledger " + g.name + " " + today(), lines:[pr ? "Project: " + pr.name : "All projects", [...g.cats].join(", ")],
+    tables:[{heading:"Bills and payments", head:["Date", "Details", "Project", "Bill", "Paid", "Balance"], body:rows.map(r => [fmtDate(r.date), r.details, r.pname, amt(r.bill), amt(r.paid), balText(r.bal)]),
+      foot:["Total", "", "", inr(billed), inr(paid), balText(bal)], right:[3,4,5], cols:{0:{cellWidth:22}, 2:{cellWidth:34}}},
+      ...(perProj.length > 1 ? [{heading:"Balance by project", head:["Project", "Billed", "Paid", "Balance"], body:perProj, right:[1,2,3]}] : [])],
+    boxes:[{title:"Account position as on " + stamp, rows:[["Total billed", inr(billed)], ["Total paid", inr(paid)], [bal >= 1 ? "Balance payable to " + g.name : bal <= -1 ? "Advance with " + g.name : "Account settled", inr(Math.abs(bal)), true]]}],
+    signatures:["For " + (firmInfo().name || "contractor"), g.name]};
+}
+function pdfReport(){
+  const [a, b] = periodRange(), tx = S.txns.filter(t => inRange(t, a, b)), pids = S.rp.pid ? [S.rp.pid] : S.projects.map(p => p.id);
+  const scope = S.rp.pid ? "Project: " + proj(S.rp.pid).name : "All projects", period = "Period: " + rangeLabel(a, b);
+  const tab = S.rp.tab, base = {lines:[period, scope], positionPids:pids};
+  if (tab==="summary"){
+    const rows = rpMonthly(tx, a, b), T = rows.reduce((x,r) => ({i:x.i+r.inn, o:x.o+r.out}), {i:0, o:0});
+    const bills = tx.filter(t => t.kind==="exp");
+    return {...base, title:"Summary report", filename:"Summary " + a + " to " + b,
+      tables:[{heading:"Money in and out by month", head:["Month", "Money in", "Money out", "Net"], body:rows.map(r => [monthLabel(r.m), inr(r.inn), inr(r.out), inr(r.net)]), foot:["Total", inr(T.i), inr(T.o), inr(T.i - T.o)], right:[1,2,3]}],
+      boxes:[{title:"In this period", rows:[["Money received", inr(T.i)], ["Bills", inr(bills.reduce((x,t)=>x+n(t.amount),0))], ["GST in bills", inr(bills.reduce((x,t)=>x+n(t.gst),0))], ["Paid out", inr(T.o)], ["Net cash for the period", inr(T.i - T.o), true]], color:[60,70,80]}]};
+  }
+  if (tab==="projects"){
+    const ids = pids, body = [], T = {rec:0, bills:0, cash:0};
+    for (const id of ids){ const p = proj(id), xs = tx.filter(t => t.projectId===id), rec = xs.filter(t => t.kind==="in").reduce((x,t)=>x+n(t.amount),0), bills = xs.filter(t => t.kind==="exp").reduce((x,t)=>x+n(t.amount),0), cash = rec - xs.reduce((x,t)=>x+outflow(t),0), s = stats(id);
+      T.rec += rec; T.bills += bills; T.cash += cash; body.push([p.name, STATUS[p.status], inr(s.contract), inr(rec), inr(bills), inr(cash), inr(s.margin) + (s.contract ? " (" + Math.round(s.margin/s.contract*100) + "%)" : "")]); }
+    return {...base, title:"Project-wise report", filename:"Projects " + a + " to " + b, lines:[period, scope, "Received, bills and net cash are for the period; margin is for the whole project so far."],
+      tables:[{head:["Project", "Status", "Contract", "Received", "Bills", "Net cash", "Margin so far"], body, foot:["Total", "", "", inr(T.rec), inr(T.bills), inr(T.cash), ""], right:[2,3,4,5,6]}]};
+  }
+  if (tab==="spending"){
+    const bills = tx.filter(t => t.kind==="exp"), tot = bills.reduce((x,t)=>x+n(t.amount),0), cats = {};
+    for (const t of bills) cats[t.category||"Other"] = (cats[t.category||"Other"]||0) + n(t.amount);
+    const ven = new Map(); for (const t of bills){ if (!norm(t.party)) continue; const r = ven.get(norm(t.party)) || {name:t.party.trim(), amt:0, cnt:0}; r.amt += n(t.amount); r.cnt++; ven.set(norm(t.party), r); }
+    return {...base, title:"Spending report", filename:"Spending " + a + " to " + b,
+      tables:[{heading:"By category", head:["Category", "Amount", "Share"], body:Object.entries(cats).sort((x,y)=>y[1]-x[1]).map(([c,v]) => [c, inr(v), Math.round(v/tot*100) + "%"]), foot:["Total", inr(tot), "100%"], right:[1,2]},
+        {heading:"By vendor", head:["Vendor", "Bills", "Amount", "Share"], body:[...ven.values()].sort((x,y)=>y.amt-x.amt).map(r => [r.name, r.cnt, inr(r.amt), Math.round(r.amt/tot*100) + "%"]), right:[1,2,3]}]};
+  }
+  if (tab==="gst"){
+    const bills = tx.filter(t => t.kind==="exp").sort(byDate), tot = bills.reduce((x,t)=>x+n(t.amount),0), gst = bills.reduce((x,t)=>x+n(t.gst),0);
+    const ms = [...new Set(bills.map(t => monthKey(t.date)))].sort();
+    return {...base, title:"GST & bills report", filename:"GST bills " + a + " to " + b,
+      tables:[{heading:"GST by month", head:["Month", "Bills", "Taxable value", "GST", "Bill total"], body:ms.map(m => { const xs = bills.filter(t => monthKey(t.date)===m), tt = xs.reduce((x,t)=>x+n(t.amount),0), g = xs.reduce((x,t)=>x+n(t.gst),0); return [monthLabel(m), xs.length, inr(tt-g), inr(g), inr(tt)]; }), foot:["Total", bills.length, inr(tot-gst), inr(gst), inr(tot)], right:[1,2,3,4]},
+        {heading:"Bills", head:["Date", "Vendor", "Bill no.", "Project", "Taxable", "GST", "Total"], body:bills.map(t => [fmtDate(t.date), t.party || "", t.billNo || "—", (proj(t.projectId)||{}).name || "", inr(n(t.amount)-n(t.gst)), inr(n(t.gst)), inr(t.amount)]), foot:["Total", "", "", "", inr(tot-gst), inr(gst), inr(tot)], right:[4,5,6], cols:{0:{cellWidth:22}}}]};
+  }
+  // labour
+  const att = S.att.filter(x => x.date >= a && x.date <= b && (!S.rp.pid || x.projectId===S.rp.pid)), m = new Map();
+  for (const x of att){ const r = m.get(x.workerId) || {name:(worker(x.workerId)||{}).name || x.worker, days:0, ot:0, wages:0, paid:0, kharchi:0}; r.days += FACTOR[x.status]||0; r.ot += n(x.ot); r.wages += n(x.wage); m.set(x.workerId, r); }
+  for (const t of tx){ if (!t.workerId) continue; const r = m.get(t.workerId) || {name:(worker(t.workerId)||{}).name || t.party, days:0, ot:0, wages:0, paid:0, kharchi:0}; if (t.kind==="pay") r.kharchi += n(t.amount); else if (t.kind==="exp") r.paid += n(t.paid); m.set(t.workerId, r); }
+  const rows = [...m.values()].sort((x,y) => y.wages - x.wages), T = rows.reduce((x,r) => ({d:x.d+r.days, w:x.w+r.wages, k:x.k+r.kharchi, p:x.p+r.paid}), {d:0, w:0, k:0, p:0});
+  return {...base, title:"Labour report", filename:"Labour " + a + " to " + b,
+    tables:[{head:["Worker", "Days", "OT hours", "Wages earned", "Kharchi", "Wages paid"], body:rows.map(r => [r.name, daysStr(r.days), r.ot || "", inr(r.wages), inr(r.kharchi), inr(r.paid)]), foot:["Total", daysStr(T.d), "", inr(T.w), inr(T.k), inr(T.p)], right:[1,2,3,4,5]}],
+    boxes:[{title:"Labour for the period", rows:[["Wages earned", inr(T.w)], ["Paid (wages + kharchi)", inr(T.p + T.k)], ["Still to pay", inr(Math.max(0, T.w - T.p - T.k)), true]], color:[60,70,80]}]};
+}
+function pdfWages(){
+  const pid = labourPid(), st = S.lweek, rows = weekSummary(pid, st), days = [...Array(7)].map((_, i) => addDays(st, i));
+  const end = addDays(st, 6), kh = wid => S.txns.filter(t => t.kind==="pay" && t.workerId===wid && t.projectId===pid && t.date >= st && t.date <= end).reduce((x,t)=>x+n(t.amount),0);
+  rows.forEach(r => { r.kh = kh(r.wid); });
+  const T = rows.reduce((x,r) => ({g:x.g+r.gross, k:x.k+r.kh, n:x.n+Math.max(0, r.remaining >= 1 ? r.net : 0), p:x.p+r.paidGross}), {g:0, k:0, n:0, p:0});
+  const dayHead = days.map(d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", {weekday:"short"}).slice(0,2) + " " + d.slice(8));
+  return {landscape:true, title:"Wage sheet: " + proj(pid).name, filename:"Wages " + proj(pid).name + " " + st, lines:["Week " + weekLabel(st) + "   ·   payday " + WEEKDAYS[payday()] + " " + dShort(addDays(st, 7)), "P = present, ½ = half day, A = absent. Kharchi is deducted from the amount to pay."],
+    tables:[{head:["Worker", ...dayHead, "Days", "Earned", "Kharchi", "To pay", "Signature"],
+      body:rows.map(r => [r.name + (r.ot ? "\n+" + r.ot + " h OT" : ""), ...days.map(d => r.marks[d]==="H" ? "½" : r.marks[d] || "–"), daysStr(r.days), inr(r.gross), amt(r.kh), r.remaining >= 1 ? inr(r.net) : "Paid ✓", ""]),
+      foot:["Total", "", "", "", "", "", "", "", daysStr(rows.reduce((x,r)=>x+r.days,0)), inr(T.g), amt(T.k), inr(T.n), ""], right:[9,10,11], cols:{0:{cellWidth:30}, 1:{halign:"center"}, 2:{halign:"center"}, 3:{halign:"center"}, 4:{halign:"center"}, 5:{halign:"center"}, 6:{halign:"center"}, 7:{halign:"center"}, 13:{cellWidth:24}}}],
+    boxes:[{title:"Week position as on " + stampNow(), rows:[["Wages earned", inr(T.g)], ["Kharchi given this week", inr(T.k)], ["Paid so far (including kharchi)", inr(T.p)], ["Still to pay", inr(T.n), true]]}],
+    signatures:["Prepared by", "Checked by"]};
 }
 
 /* ---------- sheets ---------- */
@@ -1376,6 +1608,11 @@ document.addEventListener("click", async ev => {
     case "sk": S.sk = a.dataset.k; render(); break;
     case "rp-tab": S.rp.tab = a.dataset.k; render(); break;
     case "rp-csv": reportCSV(); break;
+    case "rp-pdf": exportPdf(pdfReport); break;
+    case "pdf-project": exportPdf(pdfProject); break;
+    case "pdf-ledger": exportPdf(pdfLedger); break;
+    case "pdf-all": exportPdf(pdfAll); break;
+    case "pdf-wages": exportPdf(pdfWages); break;
     case "ledger": S.ledgerFrom = S.view==="ledger" ? S.ledgerFrom : S.view; S.view="ledger"; S.party=a.dataset.k; S.ledgerProj=""; window.scrollTo(0,0); render(); break;
     case "ledger-proj": S.ledgerProj=a.dataset.p; render(); break;
     case "ledger-pay": { const g = partyGroups().find(r => r.key===S.party); const pid = S.ledgerProj || (duesList(null).find(r => norm(r.party)===S.party && r.due>0) || {}).projectId; const d = duesList(pid).find(r => norm(r.party)===S.party); entryForm("pay", null, {projectId:pid, party:g.name, amount: d && d.due>0 ? Math.round(d.due) : ""}); break; }
@@ -1426,6 +1663,7 @@ document.addEventListener("click", async ev => {
 });
 document.addEventListener("change", ev => { if (ev.target.id==="bm"){ S.billMonth = ev.target.value; render(); }
   if (ev.target.id==="lb-proj"){ S.lpid = ev.target.value; render(); }
+  if (["firm-name","firm-phone","firm-gstin"].includes(ev.target.id)){ LS.set("sk.firm", {name:$("#firm-name").value.trim(), phone:$("#firm-phone").value.trim(), gstin:$("#firm-gstin").value.trim().toUpperCase()}); toast("Business details saved"); }
   if (ev.target.id==="rp-period"){ S.rp.period = ev.target.value; render(); }
   if (ev.target.id==="rp-proj"){ S.rp.pid = ev.target.value; render(); }
   if (ev.target.id==="rp-from" && ev.target.value){ S.rp.from = ev.target.value; render(); }
