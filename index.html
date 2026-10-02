@@ -312,7 +312,7 @@ function syncMsg(e){
   if (c==="offline") return "You're offline. Changes are kept on this phone and will sync when you're back online.";
   if (c==="wrong_pin") return "The PIN doesn't match the one in your Google Sheet script. Fix it in Settings.";
   if (c==="pin_not_set") return "Set your own PIN at the top of the Google Sheet script, then deploy it again.";
-  if (c==="bad_url") return "That link didn't answer like the Site Khata script. Copy the Web app URL from Deploy → Manage deployments.";
+  if (c==="bad_url") return "That link didn't answer like the Site Khata script. In Apps Script open Deploy → Manage deployments, check Who has access is set to Anyone, and copy the Web app URL ending in /exec.";
   return "The Google Sheet reported a problem" + (e && e.message ? ": " + e.message : ".") + " Your changes are safe on this phone.";
 }
 function setSync(state, err){ S.sync = {state, err, at: state==="ok" ? Date.now() : (S.sync && S.sync.at)}; if (state==="ok") LS.set("sk.lastSync", Date.now()); paintPill(); }
@@ -411,6 +411,7 @@ function copyScript(btn){
 }
 
 /* ---------- setup & settings ---------- */
+function cleanUrl(u){ return String(u||"").trim().replace(/\/macros\/u\/\d+\/s\//, "/macros/s/").replace(/[?#].*$/, ""); }
 function renderConnect(){
   loadScriptText();
   header("Site Khata", "Set up your project ledger", !!CFG);
@@ -446,9 +447,10 @@ function renderConnect(){
   </section>`;
   $("#cf").addEventListener("submit", async ev => {
     ev.preventDefault();
-    const cfg = {mode:"sheet", url:$("#c-url").value.trim(), pin:$("#c-pin").value.trim()};
+    const cfg = {mode:"sheet", url:cleanUrl($("#c-url").value), pin:$("#c-pin").value.trim()};
     const up = $("#c-up") ? $("#c-up").checked : false;
     const msg = $("#c-msg"), go = $("#c-go");
+    if (/\/dev$/.test(cfg.url)){ msg.innerHTML = `<div class="confirm">That's the test link ending in /dev. Use the Web app URL ending in /exec from Deploy → Manage deployments.</div>`; return; }
     if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(cfg.url)){ msg.innerHTML = `<div class="confirm">The URL should start with https://script.google.com/macros/s/ and end with /exec.</div>`; return; }
     go.disabled = true; go.textContent = "Checking…"; msg.innerHTML = "";
     try {
