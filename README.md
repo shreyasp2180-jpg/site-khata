@@ -6,6 +6,9 @@ It also handles labour: mark daily attendance (present, half day, absent, overti
 
 It runs in any browser and can be added to the home screen like an app. It keeps working on site with no signal and syncs when you're back online.
 
+## Try it
+Open **https://shreyasp2180-jpg.github.io/site-khata/#try** on a phone. It opens straight into the app with sample projects and workers, saved on that phone only. No setup needed.
+
 ## Where the data is saved
 
 When you first open the app, you choose one of these:
@@ -24,6 +27,9 @@ When you first open the app, you choose one of these:
 7. In the app, paste the URL and your PIN, then tap **Connect Google Sheet**.
 
 "Anyone" only means the app can reach your script. Every request must include your PIN, so don't share the PIN or the URL with anyone else.
+
+### Setting up another phone
+Once one phone or laptop is connected, open **Settings → Copy setup link for another phone** and send that link to the other phone. Opening it fills in the Sheet details; tap **Connect Google Sheet**. The link contains your PIN, so share it only with people you trust with the khata.
 
 ### Updating the script
 When the app says the Google Sheet script is out of date, go to **Settings → Google Sheet script → Copy latest script** and follow the steps shown there.

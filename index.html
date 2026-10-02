@@ -522,7 +522,8 @@ async function restoreBackup(file){
 
 function nudge(){
   const w = $("#bannerWrap"); let h = "";
-  if (CFG && CFG.mode==="local" && S.txns.length && S.view!=="settings" && S.view!=="connect"){
+  if (CFG && CFG.mode==="local" && CFG.trial && S.view==="home") h = `<div class="banner"><b>Trial mode.</b> These are sample projects, saved on this phone only. Try adding entries, labour and PDFs. When you're ready to use it for real, tap <b>Remove examples</b> and connect your Google Sheet in Settings. <button class="btn small" data-act="settings">Settings</button></div>`;
+  if (!h && CFG && CFG.mode==="local" && S.txns.length && S.view!=="settings" && S.view!=="connect" && !(CFG.trial && S.txns.every(t => t.sample))){
     const bk = LS.get("sk.lastBackup", 0);
     if (Date.now() - bk > 14*864e5) h = `<div class="banner">Your entries are only on this phone. ${bk ? "Your last backup is over 2 weeks old." : "You haven't made a backup yet."} <button class="btn small" data-act="backup">Download backup</button></div>`;
   }
@@ -544,7 +545,7 @@ function cleanUrl(u){ return String(u||"").trim().replace(/\/macros\/u\/\d+\/s\/
 function renderConnect(){
   loadScriptText();
   header("Site Khata", "Set up your project ledger", !!CFG);
-  const has = S.projects.length || S.txns.length;
+  const realP = S.projects.filter(p => !p.sample), realT = S.txns.filter(t => !t.sample), has = realP.length || realT.length;
   $("#main").innerHTML = `
   <div class="ph"><h1>Where should your khata be saved?</h1><p class="muted" style="margin:0;max-width:56ch">Pick once. You can change it later in Settings.</p></div>
   <section class="setup-card">
@@ -561,10 +562,11 @@ function renderConnect(){
         <li>Paste that URL and your PIN below.</li>
       </ol>
     </details>
+    ${S.prefill ? `<div class="banner" style="margin:0">Your Google Sheet details were filled in from the setup link. Tap <b>Connect Google Sheet</b>.</div>` : ""}
     <form class="f" id="cf">
-      <label class="fl">Web app URL<input id="c-url" type="url" required placeholder="https://script.google.com/macros/s/…/exec" value="${esc(CFG && CFG.url || "")}"></label>
-      <label class="fl">PIN<input id="c-pin" required autocomplete="off" value="${esc(CFG && CFG.pin || "")}"></label>
-      ${has ? `<label class="check"><input type="checkbox" id="c-up" checked> Upload the ${S.projects.length} projects and ${S.txns.length} entries already on this phone</label>` : ""}
+      <label class="fl">Web app URL<input id="c-url" type="url" required placeholder="https://script.google.com/macros/s/…/exec" value="${esc(S.prefill ? S.prefill.url : CFG && CFG.url || "")}"></label>
+      <label class="fl">PIN<input id="c-pin" required autocomplete="off" value="${esc(S.prefill ? S.prefill.pin : CFG && CFG.pin || "")}"></label>
+      ${has ? `<label class="check"><input type="checkbox" id="c-up" ${CFG && CFG.trial ? "" : "checked"}> Upload the ${realP.length} projects and ${realT.length} entries already on this phone${CFG && CFG.trial ? " (sample projects are never uploaded)" : ""}</label>` : ""}
       <div id="c-msg"></div>
       <div class="f-actions"><button class="btn primary" type="submit" id="c-go">Connect Google Sheet</button></div>
     </form>
@@ -585,7 +587,7 @@ function renderConnect(){
     go.disabled = true; go.textContent = "Checking…"; msg.innerHTML = "";
     try {
       const r = await api({action:"load"}, cfg);
-      const localP = S.projects, localT = S.txns;
+      const localP = S.projects.filter(p => !p.sample), localT = S.txns.filter(t => !t.sample);
       CFG = cfg; LS.set("sk.cfg", CFG);
       if (up){
         const ids = new Set(r.projects.map(p => p.id)), tids = new Set(r.txns.map(t => t.id));
@@ -600,7 +602,7 @@ function renderConnect(){
         LS.set("sk.queue", queue);
       } else { S.projects = r.projects; S.txns = r.txns; S.workers = r.workers || []; S.att = r.attendance || []; queue = []; LS.set("sk.queue", queue); }
       S.scriptVersion = r.version || 1;
-      persist(); S.view = "home"; setSync("ok"); render(); toast("Connected to your Google Sheet"); flush();
+      S.prefill = null; persist(); S.view = "home"; setSync("ok"); render(); toast("Connected to your Google Sheet"); flush();
     } catch(e){ msg.innerHTML = `<div class="confirm">${esc(syncMsg(e))}</div>`; go.disabled = false; go.textContent = "Connect Google Sheet"; }
   });
 }
@@ -615,7 +617,9 @@ function renderSettings(){
   <section class="setup-card">
     <div class="sc-head"><h3>${sheet ? "Saving to Google Sheet" : "Saved on this phone only"}</h3><span class="pill ${pillState()[1]}">${pillState()[0]}</span></div>
     ${sheet ? `<p class="muted mono" style="overflow-wrap:anywhere;margin:0">${esc(CFG.url)}</p><p class="muted" style="margin:0">Last synced ${when(last)}${queue.length ? " · " + queue.length + " change" + (queue.length>1?"s":"") + " waiting" : ""}</p>${err}
-      <div class="f-actions"><button class="btn primary" data-act="sync">Sync now</button><button class="btn" data-act="connect">Change connection</button></div>`
+      <div class="f-actions"><button class="btn primary" data-act="sync">Sync now</button><button class="btn" data-act="connect">Change connection</button></div>
+      <div class="f-actions"><button class="btn" data-act="setup-link">Copy setup link for another phone</button></div>
+      <p class="hint" style="margin:0">Opens the app on another phone already connected to this Sheet. The link contains your PIN, so send it only to yourself or someone you trust with this khata.</p>`
     : `<p class="muted" style="margin:0">Connect a Google Sheet to keep entries safe if this phone is lost, and to use them on a laptop too.</p><div class="f-actions"><button class="btn primary" data-act="connect">Connect Google Sheet</button></div>`}
   </section>
   <section class="setup-card">
@@ -668,11 +672,24 @@ async function loadExamples(){
     T({projectId:p2.id, kind:"exp", category:"Subcontractor", party:"Sanjay carpenter", amount:120000, paid:80000, mode:"Cash", date:d(10), note:"Wardrobes & kitchen – labour"}),
     T({projectId:p2.id, kind:"exp", category:"Electrical", party:"Bright Electricals", amount:38200, gst:5827, billNo:"BE/301", paid:0, date:d(5), note:"Profile lights, wiring"})
   ];
-  await run(async () => { await store.saveProject(p1); await store.saveProject(p2); for (const t of tx) await store.saveTxn(t); }, "Example projects added");
+  await run(async () => {
+    await store.saveProject(p1); await store.saveProject(p2); for (const t of tx) await store.saveTxn(t);
+    if (CFG && CFG.trial){ // sample labour so the attendance and payday flow can be tried straight away
+      const w1 = {id:uid(), name:"Example – Ramesh (mistri)", role:"Mistri", projectId:p1.id, rate:900, otRate:0, payTo:"", active:true, sample:true, created:Date.now()};
+      const w2 = {id:uid(), name:"Example – Suresh (helper)", role:"Helper", projectId:p1.id, rate:600, otRate:0, payTo:"", active:true, sample:true, created:Date.now()};
+      await store.saveWorker(w1); await store.saveWorker(w2);
+      const st = addDays(weekStartOf(today()), -7), items = [];
+      for (let i = 0; i < 13; i++){ const day = addDays(st, i); if (day >= today() || dow(day)===0) continue;
+        for (const w of [w1, w2]){ const status = (w===w2 && i===2) ? "H" : "P", ot = (w===w1 && i===1) ? 2 : 0; items.push({...attRecord(w, p1.id, day, status, ot), sample:true}); } }
+      await store.saveAtt(items);
+      await store.saveTxn(T({projectId:p1.id, kind:"pay", party:w2.name, amount:500, date:addDays(st, 2), mode:"Cash", note:"Kharchi", workerId:w2.id}));
+    }
+  }, "Example projects added");
 }
 async function clearExamples(){
   const ps = S.projects.filter(p=>p.sample);
-  await run(async () => { for (const p of ps) await store.deleteProject(p.id); for (const t of S.txns.filter(t=>t.sample)) await store.deleteTxn(t.id); }, "Examples removed");
+  await run(async () => { for (const p of ps) await store.deleteProject(p.id); for (const t of S.txns.filter(t=>t.sample)) await store.deleteTxn(t.id);
+    if (S.workers.some(w => w.sample) && (!CFG || CFG.mode==="local")){ const ids = new Set(S.workers.filter(w => w.sample).map(w => w.id)); S.workers = S.workers.filter(w => !ids.has(w.id)); S.att = S.att.filter(a => !ids.has(a.workerId)); persist(); render(); } }, "Examples removed");
 }
 
 /* ---------- render ---------- */
@@ -1637,6 +1654,10 @@ document.addEventListener("click", async ev => {
     case "connect": S.view="connect"; render(); break;
     case "go-local": CFG = {mode:"local"}; LS.set("sk.cfg", CFG); queue = []; LS.set("sk.queue", queue); S.view="home"; render(); toast("Saving on this phone"); break;
     case "sync": pull(); break;
+    case "setup-link": { const code = btoa(unescape(encodeURIComponent(JSON.stringify({url:CFG.url, pin:CFG.pin})))).replace(/\+/g,"-").replace(/\//g,"_");
+      const link = location.origin + location.pathname + "#connect=" + code;
+      const fb = () => { openSheet(`<div class="sh-head"><h3>Setup link</h3><button class="x" data-act="close" aria-label="Close">×</button></div><p class="hint">Copy this link and open it on the other phone.</p><textarea id="stm" readonly style="width:100%;height:120px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:8px;font-size:12px">${esc(link)}</textarea>`); const t=$("#stm"); t.focus(); t.select(); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(() => toast("Setup link copied. Send it on WhatsApp and open it on the phone."), fb); else fb(); break; }
     case "backup": downloadBackup(); break;
     case "copy-script": copyScript(a); break;
     case "csv-all": exportCSV([txHead, ...[...S.txns].sort((x,y)=>(x.date||"").localeCompare(y.date||"")).map(txCSV)], "site-khata-all-" + today() + ".csv"); break;
@@ -1688,8 +1709,15 @@ document.addEventListener("keydown", ev => { if (ev.key==="Enter" && ev.target.m
 function boot(){
   const c = LS.get("sk.data", null);
   if (c){ S.projects = c.projects || []; S.txns = c.txns || []; S.workers = c.workers || []; S.att = c.att || []; }
-  if (!CFG) S.view = "connect";
+  // Links: #try opens a trial with sample projects; #connect=… fills in a Google Sheet connection.
+  const hash = location.hash, cm = hash.match(/^#connect=([A-Za-z0-9+/=_-]+)$/);
+  let startTrial = false;
+  if (hash==="#try" && !CFG){ CFG = {mode:"local", trial:true}; LS.set("sk.cfg", CFG); startTrial = true; }
+  if (cm){ try { const j = JSON.parse(decodeURIComponent(escape(atob(cm[1].replace(/-/g,"+").replace(/_/g,"/"))))); if (j.url && j.pin){ S.prefill = j; S.view = "connect"; } } catch {} }
+  if (hash) history.replaceState(null, "", location.pathname);
+  if (!CFG && !S.prefill) S.view = "connect";
   render();
+  if (startTrial && !S.projects.length) loadExamples();
   if (CFG && CFG.mode==="sheet") pull();
   window.addEventListener("online", () => pull());
   document.addEventListener("visibilitychange", () => { if (document.visibilityState==="visible" && CFG && CFG.mode==="sheet" && Date.now() - (LS.get("sk.lastSync",0)) > 60000) pull(); });
