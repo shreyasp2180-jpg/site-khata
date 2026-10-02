@@ -471,6 +471,7 @@ function renderConnect(){
     const cfg = {mode:"sheet", url:cleanUrl($("#c-url").value), pin:$("#c-pin").value.trim()};
     const up = $("#c-up") ? $("#c-up").checked : false;
     const msg = $("#c-msg"), go = $("#c-go");
+    if (/googleusercontent\.com/.test(cfg.url)){ msg.innerHTML = `<div class="confirm">That's the address Google shows after opening the link, and it only works once. Paste the Web app URL from Deploy → Manage deployments instead. It starts with https://script.google.com/macros/s/ and ends with /exec.</div>`; return; }
     if (/\/dev$/.test(cfg.url)){ msg.innerHTML = `<div class="confirm">That's the test link ending in /dev. Use the Web app URL ending in /exec from Deploy → Manage deployments.</div>`; return; }
     if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(cfg.url)){ msg.innerHTML = `<div class="confirm">The URL should start with https://script.google.com/macros/s/ and end with /exec.</div>`; return; }
     go.disabled = true; go.textContent = "Checking…"; msg.innerHTML = "";
